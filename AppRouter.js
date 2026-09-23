@@ -19,6 +19,8 @@ export default function AppRouter() {
           path: "code.html",
           element: createElement(Home),
         }),
+        // Cloudflare Pages redirects /code.html to /code.
+        createElement(Route, { path: "code", element: createElement(Home) }),
         createElement(Route, { path: "*", element: createElement(NotFound) }),
       ),
     ),
