@@ -24,3 +24,22 @@ Use `npm run build` for production output in `dist/`, and `npm run preview` to c
 - `DESIGN.md`, `screen.png`, and `icon.png` are the supplied design references/assets.
 
 Configure production hosting to serve `index.html` for application paths so BrowserRouter can handle direct links. Both `/` and `/code.html` are built entry points. The editor and terminal are local demos; the existing placeholder links and external branding assets still need final product destinations/assets before launch.
+
+## Docker
+
+```sh
+docker build -t nakka-landing .
+docker run --rm -p 8080:80 nakka-landing
+```
+
+Open http://localhost:8080. nginx serves the built `dist/` and sends unknown paths to `index.html` so React Router can handle them.
+
+## Deploy to Cloudflare Pages (free)
+
+Cloudflare Pages builds the site from GitHub on every push to `main`; it does not use the Dockerfile.
+
+1. In the Cloudflare dashboard, go to **Workers & Pages → Create → Pages → Connect to Git** and pick `AnkaraoBalu/NakkaAI`.
+2. Build settings: framework preset **Vite** (or None), build command `npm run build`, output directory `dist`, root directory left empty.
+3. Click **Save and Deploy**. The site goes live at `https://<project-name>.pages.dev`.
+
+`.nvmrc` pins the build to Node 22. Pages serves `index.html` for unknown paths because the build has no `404.html`, so direct links work without extra config.
