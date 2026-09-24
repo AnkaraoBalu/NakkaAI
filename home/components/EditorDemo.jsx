@@ -197,7 +197,7 @@ export default function EditorDemo() {
             </div>
           </div>
 
-          <div className="col-span-12 md:col-span-7 lg:col-span-5 min-w-0 bg-surface-container-lowest flex flex-col font-code-md text-code-md border-r border-outline-variant/20">
+          <div className="col-span-12 md:col-span-7 lg:col-span-5 min-w-0 bg-surface-container-lowest flex flex-col font-code-md text-code-md md:border-r border-outline-variant/20">
             <div className="flex items-center bg-surface-container-low overflow-x-auto whitespace-nowrap text-[13px] border-b border-outline-variant/20">
               <button
                 id="tab-btn-auth"
@@ -290,7 +290,7 @@ export default function EditorDemo() {
             </div>
 
             <div
-              className="flex-1 overflow-y-auto px-4 py-3 space-y-3 font-mono text-[12px] max-h-[360px] md:max-h-[460px] select-text"
+              className="flex-1 min-w-0 overflow-y-auto [overflow-wrap:anywhere] px-3 sm:px-4 py-3 space-y-3 font-mono text-[12px] max-h-[360px] md:max-h-[460px] select-text"
               id="agent-scroll"
               ref={scrollRef}
             >
@@ -335,7 +335,7 @@ export default function EditorDemo() {
 
                 <div className="pl-6 space-y-1.5 pt-1 text-[12px]">
                   <div className="flex items-center gap-2 text-white font-medium">
-                    <span className="w-3.5 h-3.5 rounded bg-primary-container text-on-primary-container flex items-center justify-center text-[10px] font-bold leading-none">
+                    <span className="w-3.5 h-3.5 shrink-0 rounded bg-primary-container text-on-primary-container flex items-center justify-center text-[10px] font-bold leading-none">
                       −
                     </span>
                     <span className="text-[#7bd0ff] font-semibold">
@@ -343,13 +343,13 @@ export default function EditorDemo() {
                     </span>
                   </div>
                   <div className="flex items-center gap-2 text-outline">
-                    <span className="w-3.5 h-3.5 rounded border border-outline-variant flex items-center justify-center text-[10px]"></span>
+                    <span className="w-3.5 h-3.5 shrink-0 rounded border border-outline-variant flex items-center justify-center text-[10px]"></span>
                     <span className="text-on-surface-variant">
                       Identify the main components and flow
                     </span>
                   </div>
                   <div className="flex items-center gap-2 text-outline">
-                    <span className="w-3.5 h-3.5 rounded border border-outline-variant flex items-center justify-center text-[10px]"></span>
+                    <span className="w-3.5 h-3.5 shrink-0 rounded border border-outline-variant flex items-center justify-center text-[10px]"></span>
                     <span className="text-on-surface-variant">
                       Explain the workspace in simple terms
                     </span>
@@ -439,7 +439,7 @@ export default function EditorDemo() {
 
                 <div className="pl-6 space-y-1.5 pt-1 text-[12px]">
                   <div className="flex items-center gap-2 text-outline">
-                    <span className="w-3.5 h-3.5 rounded bg-secondary flex items-center justify-center text-on-secondary text-[10px] font-bold">
+                    <span className="w-3.5 h-3.5 shrink-0 rounded bg-secondary flex items-center justify-center text-on-secondary text-[10px] font-bold">
                       ✓
                     </span>
                     <span className="line-through opacity-70">
@@ -447,7 +447,7 @@ export default function EditorDemo() {
                     </span>
                   </div>
                   <div className="flex items-center gap-2 text-white font-medium">
-                    <span className="w-3.5 h-3.5 rounded bg-primary-container text-on-primary-container flex items-center justify-center text-[10px] font-bold leading-none">
+                    <span className="w-3.5 h-3.5 shrink-0 rounded bg-primary-container text-on-primary-container flex items-center justify-center text-[10px] font-bold leading-none">
                       −
                     </span>
                     <span className="text-[#7bd0ff] font-semibold">
@@ -455,7 +455,7 @@ export default function EditorDemo() {
                     </span>
                   </div>
                   <div className="flex items-center gap-2 text-outline">
-                    <span className="w-3.5 h-3.5 rounded border border-outline-variant flex items-center justify-center text-[10px]"></span>
+                    <span className="w-3.5 h-3.5 shrink-0 rounded border border-outline-variant flex items-center justify-center text-[10px]"></span>
                     <span className="text-on-surface-variant">
                       Explain the workspace in simple terms
                     </span>
@@ -490,34 +490,34 @@ export default function EditorDemo() {
                   Ask a follow-up
                 </label>
                 <input
-                  className="w-full bg-transparent border-0 p-0 text-[13px] font-body-sm text-on-surface placeholder:text-outline focus:ring-0 focus:outline-none select-text"
+                  className="w-full min-w-0 bg-transparent border-0 p-0 text-base md:text-[13px] font-body-sm text-on-surface placeholder:text-outline focus:ring-0 focus:outline-none select-text"
                   id="agent-input-field"
                   type="text"
                   placeholder="Ask a follow-up"
                   autoComplete="off"
                 />
-                <div className="flex items-center justify-between pt-1">
+                <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
                   <div className="flex items-center gap-2">
                     <button
                       type="button"
                       aria-label="Add context"
-                      className="w-6 h-6 rounded flex items-center justify-center text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors focus:outline-none"
+                      className="w-11 h-11 md:w-6 md:h-6 shrink-0 rounded flex items-center justify-center text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors focus:outline-none"
                     >
                       <span className="material-symbols-outlined text-[18px]">
                         add
                       </span>
                     </button>
-                    <span className="px-2.5 py-0.5 rounded-full bg-[#272832] text-[11px] font-mono text-[#bdc8d1] border border-outline-variant/30 cursor-pointer hover:border-outline-variant">
+                    <span className="px-1.5 sm:px-2.5 py-0.5 rounded-full bg-[#272832] text-[11px] font-mono text-[#bdc8d1] border border-outline-variant/30 cursor-pointer hover:border-outline-variant">
                       GPT-5.4
                     </span>
-                    <span className="px-2.5 py-0.5 rounded-full bg-[#272832] text-[11px] font-mono text-[#bdc8d1] border border-outline-variant/30 cursor-pointer hover:border-outline-variant">
+                    <span className="px-1.5 sm:px-2.5 py-0.5 rounded-full bg-[#272832] text-[11px] font-mono text-[#bdc8d1] border border-outline-variant/30 cursor-pointer hover:border-outline-variant">
                       Auto
                     </span>
                   </div>
                   <button
                     type="submit"
                     aria-label="Send"
-                    className="w-7 h-7 shrink-0 rounded-full bg-[#38bdf8] text-[#00354a] flex items-center justify-center hover:brightness-110 shadow-[0_0_12px_rgba(56,189,248,0.3)] transition-all focus:outline-none"
+                    className="w-11 h-11 md:w-7 md:h-7 shrink-0 rounded-full bg-[#38bdf8] text-[#00354a] flex items-center justify-center hover:brightness-110 shadow-[0_0_12px_rgba(56,189,248,0.3)] transition-all focus:outline-none"
                   >
                     <span className="material-symbols-outlined text-[16px] font-bold">
                       arrow_upward
@@ -529,7 +529,7 @@ export default function EditorDemo() {
           </div>
         </div>
 
-        <div className="h-6 bg-primary-container text-on-primary-container px-3 flex items-center justify-between gap-3 font-label-sm text-[11px] select-none whitespace-nowrap overflow-hidden">
+        <div className="min-h-6 bg-primary-container text-on-primary-container px-2 sm:px-3 py-1 sm:py-0 flex flex-wrap items-center justify-between gap-x-3 gap-y-1 font-label-sm text-[11px] select-none whitespace-nowrap overflow-hidden">
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-1 font-semibold">
               <span className="material-symbols-outlined text-[13px]">

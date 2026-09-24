@@ -1,3 +1,4 @@
+import CardCarousel from "./CardCarousel.jsx";
 import { providerCardClass } from "../data/providers.js";
 
 export default function ProvidersSection({ selectedProvider }) {
@@ -11,13 +12,13 @@ export default function ProvidersSection({ selectedProvider }) {
           Use the models you want
         </h2>
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-5">
+      <CardCarousel label="Your model. Your choice.">
         <div
           id="card-openai"
           className={providerCardClass("openai", selectedProvider)}
         >
           <div>
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 mb-4">
               <h3 className="font-headline-sm text-headline-sm text-on-surface font-semibold">
                 OpenAI
               </h3>
@@ -25,24 +26,24 @@ export default function ProvidersSection({ selectedProvider }) {
                 Cloud API
               </span>
             </div>
-            <p className="font-body-md text-body-md text-on-surface-variant mb-6">
+            <p className="font-body-md text-body-md text-on-surface-variant mb-3">
               {
                 "\n            Industry standard models with strong reasoning and broad language support for production code generation.\n          "
               }
             </p>
           </div>
-          <div className="space-y-2 pt-4">
-            <div className="flex items-center justify-between font-code-md text-code-md py-1 text-on-surface">
+          <div className="space-y-1">
+            <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 font-code-md text-code-md py-1 text-on-surface">
               <span className="">GPT-5.4</span>
               <span className="text-outline text-[11px]">Recommended</span>
             </div>
-            <div className="flex items-center justify-between font-code-md text-code-md py-1 text-on-surface">
+            <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 font-code-md text-code-md py-1 text-on-surface">
               <span className="">GPT-5 mini</span>
               <span className="text-outline text-[11px]">
                 Fast &amp; low cost
               </span>
             </div>
-            <div className="flex items-center justify-between font-code-md text-code-md py-1 text-on-surface">
+            <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 font-code-md text-code-md py-1 text-on-surface">
               <span className="">GPT-4.1</span>
               <span className="text-outline text-[11px]">Long context</span>
             </div>
@@ -54,7 +55,7 @@ export default function ProvidersSection({ selectedProvider }) {
           className={providerCardClass("anthropic", selectedProvider)}
         >
           <div>
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 mb-4">
               <h3 className="font-headline-sm text-headline-sm text-on-surface font-semibold">
                 Anthropic
               </h3>
@@ -62,26 +63,26 @@ export default function ProvidersSection({ selectedProvider }) {
                 Cloud API
               </span>
             </div>
-            <p className="font-body-md text-body-md text-on-surface-variant mb-6">
+            <p className="font-body-md text-body-md text-on-surface-variant mb-3">
               {
                 "\n            Exceptional code comprehension, nuanced reasoning, and long context windows for massive codebases.\n          "
               }
             </p>
           </div>
-          <div className="space-y-2 pt-4">
-            <div className="flex items-center justify-between font-code-md text-code-md py-1 text-on-surface">
+          <div className="space-y-1">
+            <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 font-code-md text-code-md py-1 text-on-surface">
               <span className="">Claude Sonnet 5</span>
               <span className="text-primary text-[11px] font-semibold">
                 Flagship agent
               </span>
             </div>
-            <div className="flex items-center justify-between font-code-md text-code-md py-1 text-on-surface">
+            <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 font-code-md text-code-md py-1 text-on-surface">
               <span className="">Claude Haiku 4.5</span>
               <span className="text-outline text-[11px]">
                 Ultra-low latency
               </span>
             </div>
-            <div className="flex items-center justify-between font-code-md text-code-md py-1 text-on-surface">
+            <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 font-code-md text-code-md py-1 text-on-surface">
               <span className="">Claude Opus 5.5</span>
               <span className="text-outline text-[11px]">Deep analysis</span>
             </div>
@@ -93,7 +94,7 @@ export default function ProvidersSection({ selectedProvider }) {
           className={providerCardClass("ollama", selectedProvider)}
         >
           <div>
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 mb-4">
               <h3 className="font-headline-sm text-headline-sm text-on-surface font-semibold">
                 Ollama
               </h3>
@@ -101,30 +102,30 @@ export default function ProvidersSection({ selectedProvider }) {
                 100% Local
               </span>
             </div>
-            <p className="font-body-md text-body-md text-on-surface-variant mb-6">
+            <p className="font-body-md text-body-md text-on-surface-variant mb-3">
               {
                 "\n            Zero data leaves your machine. Full agent capabilities running offline on your local GPU or Apple Silicon hardware.\n          "
               }
             </p>
           </div>
-          <div className="space-y-2 pt-4">
-            <div className="flex items-center justify-between font-code-md text-code-md py-1 text-on-surface">
+          <div className="space-y-1">
+            <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 font-code-md text-code-md py-1 text-on-surface">
               <span className="">DeepSeek-R1</span>
               <span className="text-secondary text-[11px]">
                 Local reasoning
               </span>
             </div>
-            <div className="flex items-center justify-between font-code-md text-code-md py-1 text-on-surface">
+            <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 font-code-md text-code-md py-1 text-on-surface">
               <span className="">Llama 3.3 (70B/8B)</span>
               <span className="text-outline text-[11px]">General coding</span>
             </div>
-            <div className="flex items-center justify-between font-code-md text-code-md py-1 text-on-surface">
+            <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 font-code-md text-code-md py-1 text-on-surface">
               <span className="">Qwen 2.5 Coder</span>
               <span className="text-outline text-[11px]">Fast execution</span>
             </div>
           </div>
         </div>
-      </div>
+      </CardCarousel>
     </section>
   );
 }

@@ -1,4 +1,5 @@
 import { MARKETPLACE_URL } from "./extension.js";
+import logo from "../logo-header.png";
 
 const footerLinks = [
   { label: "VS Code Marketplace", href: MARKETPLACE_URL, external: true },
@@ -16,6 +17,11 @@ export default function Footer() {
         <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-8">
           <div className="flex flex-col items-start gap-space-md max-w-md">
             <div className="flex items-center gap-space-sm">
+              <img
+                alt=""
+                className="h-10 w-10 shrink-0 object-contain"
+                src={logo}
+              />
               <span className="font-headline-sm text-headline-sm text-on-surface tracking-tight font-medium">
                 Nakka
               </span>
@@ -37,12 +43,12 @@ export default function Footer() {
 
           <nav
             aria-label="Footer"
-            className="grid grid-cols-2 sm:grid-cols-3 gap-x-10 gap-y-3 lg:pt-1"
+            className="grid grid-cols-2 sm:grid-cols-3 gap-x-4 sm:gap-x-10 gap-y-1 lg:pt-1"
           >
             {footerLinks.map(({ label, href, external }) => (
               <a
                 key={label}
-                className="font-code-md text-code-md text-on-surface-variant hover:text-primary transition-colors whitespace-nowrap"
+                className="min-w-0 min-h-11 flex items-center font-code-md text-code-md text-on-surface-variant hover:text-primary transition-colors"
                 href={href}
                 {...(external ? { target: "_blank", rel: "noopener" } : {})}
               >

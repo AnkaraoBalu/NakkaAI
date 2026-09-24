@@ -1,3 +1,4 @@
+import CardCarousel from "./CardCarousel.jsx";
 import { INSTALL_COMMAND } from "../../components/extension.js";
 import CopyInstallButton from "../../components/CopyInstallButton.jsx";
 
@@ -12,8 +13,8 @@ export default function HowItWorksSection() {
           Install. Connect. Build.
         </h2>
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-5">
-        <div className="p-5 rounded-xl bg-surface-container-low flex flex-col justify-between shadow-sm">
+      <CardCarousel label="Simple by design">
+        <div className="min-w-0 [overflow-wrap:anywhere] p-4 sm:p-5 rounded-xl bg-surface-container-low flex flex-col justify-between shadow-sm">
           <div>
             <div className="font-headline-lg text-headline-lg text-outline mb-3">
               01
@@ -28,14 +29,14 @@ export default function HowItWorksSection() {
             </p>
           </div>
           <div className="p-3 rounded bg-surface-container-lowest font-code-md text-[12px] flex items-center justify-between gap-2 text-on-surface">
-            <code className="text-primary truncate min-w-0">
+            <code className="text-primary min-w-0 whitespace-normal [overflow-wrap:anywhere]">
               {INSTALL_COMMAND}
             </code>
             <CopyInstallButton />
           </div>
         </div>
 
-        <div className="p-5 rounded-xl bg-surface-container-low flex flex-col justify-between shadow-sm">
+        <div className="min-w-0 [overflow-wrap:anywhere] p-4 sm:p-5 rounded-xl bg-surface-container-low flex flex-col justify-between shadow-sm">
           <div>
             <div className="font-headline-lg text-headline-lg text-outline mb-3">
               02
@@ -49,13 +50,13 @@ export default function HowItWorksSection() {
               }
             </p>
           </div>
-          <div className="p-3 rounded bg-surface-container-lowest font-code-md text-[12px] flex items-center justify-between text-outline">
+          <div className="p-3 rounded bg-surface-container-lowest font-code-md text-[12px] flex items-center justify-between gap-2 text-outline">
             <span className="">ollama: http://localhost:11434</span>
-            <span className="w-2 h-2 rounded-full bg-secondary"></span>
+            <span className="w-2 h-2 shrink-0 rounded-full bg-secondary"></span>
           </div>
         </div>
 
-        <div className="p-5 rounded-xl bg-surface-container-low flex flex-col justify-between shadow-sm">
+        <div className="min-w-0 [overflow-wrap:anywhere] p-4 sm:p-5 rounded-xl bg-surface-container-low flex flex-col justify-between shadow-sm">
           <div>
             <div className="font-headline-lg text-headline-lg text-outline mb-3">
               03
@@ -74,7 +75,7 @@ export default function HowItWorksSection() {
             <span className="material-symbols-outlined text-[16px]">bolt</span>
           </div>
         </div>
-      </div>
+      </CardCarousel>
     </section>
   );
 }

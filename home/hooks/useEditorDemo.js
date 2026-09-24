@@ -18,9 +18,9 @@ export const editorFiles = {
   },
 };
 export const TAB_ACTIVE =
-  "flex shrink-0 items-center gap-2 px-3 sm:px-4 py-2 bg-surface-container-lowest text-on-surface border-t-2 border-primary-container focus:outline-none transition-colors";
+  "flex min-h-11 md:min-h-0 shrink-0 items-center gap-2 px-3 sm:px-4 py-2 bg-surface-container-lowest text-on-surface border-t-2 border-primary-container focus:outline-none transition-colors";
 export const TAB_IDLE =
-  "flex shrink-0 items-center gap-2 px-3 sm:px-4 py-2 text-on-surface-variant border-t-2 border-transparent hover:bg-surface-container-high/40 focus:outline-none transition-colors";
+  "flex min-h-11 md:min-h-0 shrink-0 items-center gap-2 px-3 sm:px-4 py-2 text-on-surface-variant border-t-2 border-transparent hover:bg-surface-container-high/40 focus:outline-none transition-colors";
 
 export function useEditorDemo() {
   const [activeFile, setActiveFile] = useState("auth");

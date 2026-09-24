@@ -19,7 +19,7 @@ const providerStyles = {
 export function providerPillClass(provider, selected) {
   const style = providerStyles[provider];
   const base =
-    "flex flex-wrap items-center justify-center gap-x-3 gap-y-0.5 px-4 py-2 rounded-lg border border-transparent cursor-pointer transition-all ";
+    "flex w-full sm:w-auto min-h-11 flex-col sm:flex-row sm:flex-wrap items-center justify-center gap-x-3 gap-y-1 px-4 py-3 sm:py-2 rounded-lg border border-transparent cursor-pointer transition-all ";
   return (
     base +
     (provider === selected
@@ -30,11 +30,11 @@ export function providerPillClass(provider, selected) {
 
 export function providerCardClass(provider, selected) {
   const base =
-    "p-5 rounded-xl flex flex-col justify-between border border-transparent transition-all duration-300 ";
+    "min-w-0 [overflow-wrap:anywhere] p-4 sm:p-5 rounded-xl flex flex-col justify-between border border-transparent transition-all duration-300 ";
   return (
     base +
     (provider === selected
-      ? `bg-surface-container shadow-xl ring-1 ${providerStyles[provider].ring} md:scale-[1.02]`
+      ? `bg-surface-container shadow-xl ring-1 ${providerStyles[provider].ring} lg:scale-[1.02]`
       : "bg-surface-container-low shadow-sm")
   );
 }

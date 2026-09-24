@@ -1,9 +1,12 @@
 export default function PackageCode({ activeFile }) {
   return (
     <div
+      tabIndex={0}
+      role="region"
+      aria-label="package.json code preview"
       id="file-content-package"
       className={
-        " flex-1 p-3 leading-[22px] overflow-x-auto [&_span]:whitespace-pre text-[12px] bg-surface-container-lowest select-text font-mono transition-opacity duration-150" +
+        " flex-1 min-h-0 max-h-[320px] md:max-h-none p-2 sm:p-3 leading-[22px] overflow-auto [&_span]:whitespace-pre text-[12px] bg-surface-container-lowest select-text font-mono transition-opacity duration-150" +
         (activeFile === "package" ? "" : " hidden")
       }
     >

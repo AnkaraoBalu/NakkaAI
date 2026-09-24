@@ -1,3 +1,5 @@
+import CardCarousel from "./CardCarousel.jsx";
+
 export default function WhyNakkaSection() {
   return (
     <section className="landing-section">
@@ -9,8 +11,8 @@ export default function WhyNakkaSection() {
           Less switching. More building.
         </h2>
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
-        <div className="p-5 rounded-xl bg-surface-container-low shadow-sm">
+      <CardCarousel label="Engineered for builders">
+        <div className="min-w-0 [overflow-wrap:anywhere] p-4 sm:p-5 rounded-xl bg-surface-container-low shadow-sm">
           <div className="w-10 h-10 rounded-lg bg-surface-container flex items-center justify-center text-primary mb-4">
             <span className="material-symbols-outlined">dock</span>
           </div>
@@ -23,7 +25,7 @@ export default function WhyNakkaSection() {
             }
           </p>
         </div>
-        <div className="p-5 rounded-xl bg-surface-container-low shadow-sm">
+        <div className="min-w-0 [overflow-wrap:anywhere] p-4 sm:p-5 rounded-xl bg-surface-container-low shadow-sm">
           <div className="w-10 h-10 rounded-lg bg-surface-container flex items-center justify-center text-secondary mb-4">
             <span className="material-symbols-outlined">key</span>
           </div>
@@ -36,7 +38,7 @@ export default function WhyNakkaSection() {
             }
           </p>
         </div>
-        <div className="p-5 rounded-xl bg-surface-container-low shadow-sm">
+        <div className="min-w-0 [overflow-wrap:anywhere] p-4 sm:p-5 rounded-xl bg-surface-container-low shadow-sm">
           <div className="w-10 h-10 rounded-lg bg-surface-container flex items-center justify-center text-tertiary mb-4">
             <span className="material-symbols-outlined">lock_open</span>
           </div>
@@ -49,7 +51,7 @@ export default function WhyNakkaSection() {
             }
           </p>
         </div>
-        <div className="p-5 rounded-xl bg-surface-container-low shadow-sm">
+        <div className="min-w-0 [overflow-wrap:anywhere] p-4 sm:p-5 rounded-xl bg-surface-container-low shadow-sm">
           <div className="w-10 h-10 rounded-lg bg-surface-container flex items-center justify-center text-primary mb-4">
             <span className="material-symbols-outlined">laptop_mac</span>
           </div>
@@ -62,7 +64,7 @@ export default function WhyNakkaSection() {
             }
           </p>
         </div>
-      </div>
+      </CardCarousel>
     </section>
   );
 }

@@ -1,6 +1,24 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+@font-face {
+  font-family: "Geist";
+  src: url("../node_modules/geist/dist/fonts/geist-sans/Geist-Variable.woff2") format("woff2");
+  font-weight: 100 900;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Geist Mono";
+  src: url("../node_modules/geist/dist/fonts/geist-mono/GeistMono-Variable.woff2") format("woff2");
+  font-weight: 100 900;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Geist Pixel";
+  src: url("../node_modules/geist/dist/fonts/geist-pixel/GeistPixel-Line.woff2") format("woff2");
+  font-weight: 400;
+  font-display: swap;
+}
 @layer base {
   html,
   body {
@@ -28,6 +46,8 @@
   }
   .section-heading {
     @apply mb-5 sm:mb-6;
+    overflow-wrap: anywhere;
+    text-wrap: balance;
   }
 }
 
@@ -104,4 +124,46 @@
     animation: none !important;
     transition: none !important;
   }
+}
+
+/* Keep cards in one swipeable row, with the next card peeking into view. */
+@layer components {
+  .card-carousel {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: 88%;
+    gap: 1rem;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scroll-snap-type: x mandatory;
+    padding: 0.5rem;
+    scroll-padding-inline: 0.5rem;
+  }
+  .card-carousel > * {
+    scroll-snap-align: start;
+  }
+  .card-carousel:focus-visible {
+    outline: 2px solid #8ed5ff;
+    outline-offset: 2px;
+  }
+  @media (min-width: 640px) {
+    .card-carousel {
+      grid-auto-columns: 46%;
+      gap: 1.25rem;
+    }
+  }
+  @media (min-width: 1024px) {
+    .card-carousel {
+      grid-auto-columns: 36%;
+    }
+  }
+}
+
+/* Geist Pixel has a single weight; faux bold and tight tracking smear its pixels. */
+.font-headline-xl,
+.font-headline-lg,
+.font-pixel {
+  font-weight: 400;
+  font-synthesis: none;
+  letter-spacing: 0;
 }

@@ -1,10 +1,10 @@
 import { useState, useEffect } from "react";
-import logo from "../logo.png";
+import logo from "../logo-header.png";
 export default function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
   useEffect(() => {
     const close = () => {
-      if (window.innerWidth >= 768) setMenuOpen(false);
+      if (window.innerWidth >= 1024) setMenuOpen(false);
     };
     const escape = (event) => {
       if (event.key === "Escape") setMenuOpen(false);
@@ -26,14 +26,14 @@ export default function Header() {
           >
             <img
               alt="Nakka logo"
-              className="h-8 w-auto object-contain"
+              className="h-10 sm:h-12 w-10 sm:w-12 shrink-0 object-contain"
               src={logo}
             />
             <span className="font-headline-sm text-headline-sm text-on-surface tracking-tight font-medium">
               Nakka
             </span>
           </a>
-          <nav className="hidden md:flex items-center gap-space-sm">
+          <nav className="hidden lg:flex items-center gap-space-sm">
             <a
               className="px-space-md py-space-xs font-body-sm text-body-sm text-on-surface-variant hover:text-on-surface transition-colors"
               href="/#features"
@@ -68,7 +68,7 @@ export default function Header() {
         </div>
         <div className="flex items-center gap-space-md">
           <a
-            className="inline-flex items-center gap-space-sm px-space-md py-space-xs rounded bg-primary-container text-on-primary-container font-label-md text-label-md hover:bg-primary transition-all duration-150"
+            className="inline-flex min-h-11 items-center gap-space-sm px-space-md py-space-xs rounded bg-primary-container text-on-primary-container font-label-md text-label-md hover:bg-primary transition-all duration-150"
             href="/#install"
           >
             <span className="material-symbols-outlined text-[18px]">
@@ -78,7 +78,7 @@ export default function Header() {
             <span className="sm:hidden">Install</span>
           </a>
           <button
-            className="md:hidden w-8 h-8 rounded flex items-center justify-center text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-colors"
+            className="lg:hidden w-11 h-11 rounded flex items-center justify-center text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-colors"
             id="mobile-menu-btn"
             aria-controls="mobile-menu"
             onClick={() => setMenuOpen(!menuOpen)}
@@ -97,7 +97,7 @@ export default function Header() {
       <nav
         id="mobile-menu"
         className={
-          "md:hidden border-t border-outline-variant/30 bg-surface/95 backdrop-blur-xl" +
+          "lg:hidden max-h-[calc(100dvh-4rem)] overflow-y-auto border-t border-outline-variant/30 bg-surface/95 backdrop-blur-xl" +
           (menuOpen ? "" : " hidden")
         }
       >

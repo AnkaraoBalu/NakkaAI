@@ -30,7 +30,7 @@ export default function CopyInstallButton() {
         aria-label={label}
         title={label}
         onClick={copyCommand}
-        className="material-symbols-outlined text-[18px] text-outline hover:text-on-surface shrink-0"
+        className="material-symbols-outlined w-11 h-11 inline-flex items-center justify-center rounded focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary text-[18px] text-outline hover:text-on-surface shrink-0"
       >
         {status === "copied"
           ? "done"

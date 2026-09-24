@@ -1,3 +1,4 @@
+import CardCarousel from "./CardCarousel.jsx";
 export default function FeaturesSection() {
   return (
     <section className="landing-section" id="features">
@@ -9,8 +10,8 @@ export default function FeaturesSection() {
           More than autocomplete. A collaborative engineering partner.
         </h2>
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
-        <div className="p-5 rounded-xl bg-surface-container-low flex flex-col justify-between shadow-sm hover:bg-surface-container transition-colors">
+      <CardCarousel label="Built to work with you">
+        <div className="min-w-0 [overflow-wrap:anywhere] p-4 sm:p-5 rounded-xl bg-surface-container-low flex flex-col justify-between shadow-sm hover:bg-surface-container transition-colors">
           <div>
             <div className="w-10 h-10 rounded-lg bg-surface-container-high flex items-center justify-center text-primary mb-4">
               <span className="material-symbols-outlined text-[22px]">
@@ -35,7 +36,7 @@ export default function FeaturesSection() {
           </div>
         </div>
 
-        <div className="p-5 rounded-xl bg-surface-container-low flex flex-col justify-between shadow-sm hover:bg-surface-container transition-colors">
+        <div className="min-w-0 [overflow-wrap:anywhere] p-4 sm:p-5 rounded-xl bg-surface-container-low flex flex-col justify-between shadow-sm hover:bg-surface-container transition-colors">
           <div>
             <div className="w-10 h-10 rounded-lg bg-surface-container-high flex items-center justify-center text-secondary mb-4">
               <span className="material-symbols-outlined text-[22px]">
@@ -61,7 +62,7 @@ export default function FeaturesSection() {
           </div>
         </div>
 
-        <div className="p-5 rounded-xl bg-surface-container-low flex flex-col justify-between shadow-sm hover:bg-surface-container transition-colors">
+        <div className="min-w-0 [overflow-wrap:anywhere] p-4 sm:p-5 rounded-xl bg-surface-container-low flex flex-col justify-between shadow-sm hover:bg-surface-container transition-colors">
           <div>
             <div className="w-10 h-10 rounded-lg bg-surface-container-high flex items-center justify-center text-primary mb-4">
               <span className="material-symbols-outlined text-[22px]">
@@ -83,7 +84,7 @@ export default function FeaturesSection() {
           </div>
         </div>
 
-        <div className="p-5 rounded-xl bg-surface-container-low flex flex-col justify-between shadow-sm hover:bg-surface-container transition-colors">
+        <div className="min-w-0 [overflow-wrap:anywhere] p-4 sm:p-5 rounded-xl bg-surface-container-low flex flex-col justify-between shadow-sm hover:bg-surface-container transition-colors">
           <div>
             <div className="w-10 h-10 rounded-lg bg-surface-container-high flex items-center justify-center text-tertiary mb-4">
               <span className="material-symbols-outlined text-[22px]">
@@ -107,7 +108,7 @@ export default function FeaturesSection() {
           </div>
         </div>
 
-        <div className="p-5 rounded-xl bg-surface-container-low flex flex-col justify-between shadow-sm hover:bg-surface-container transition-colors">
+        <div className="min-w-0 [overflow-wrap:anywhere] p-4 sm:p-5 rounded-xl bg-surface-container-low flex flex-col justify-between shadow-sm hover:bg-surface-container transition-colors">
           <div>
             <div className="w-10 h-10 rounded-lg bg-surface-container-high flex items-center justify-center text-primary mb-4">
               <span className="material-symbols-outlined text-[22px]">
@@ -133,7 +134,7 @@ export default function FeaturesSection() {
           </div>
         </div>
 
-        <div className="p-5 rounded-xl bg-surface-container-low flex flex-col justify-between shadow-sm hover:bg-surface-container transition-colors">
+        <div className="min-w-0 [overflow-wrap:anywhere] p-4 sm:p-5 rounded-xl bg-surface-container-low flex flex-col justify-between shadow-sm hover:bg-surface-container transition-colors">
           <div>
             <div className="w-10 h-10 rounded-lg bg-surface-container-high flex items-center justify-center text-on-surface mb-4">
               <span className="material-symbols-outlined text-[22px]">
@@ -172,7 +173,7 @@ export default function FeaturesSection() {
             </div>
           </div>
         </div>
-      </div>
+      </CardCarousel>
     </section>
   );
 }

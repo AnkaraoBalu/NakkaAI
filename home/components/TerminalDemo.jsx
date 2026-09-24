@@ -11,7 +11,7 @@ export default function TerminalDemo() {
         <h2 className="font-headline-lg text-headline-lg-mobile sm:text-headline-lg text-on-surface mb-3">
           Built for the way developers actually work
         </h2>
-        <p className="font-body-lg text-body-lg text-on-surface-variant">
+        <p className="font-body-lg text-body-md sm:text-body-lg text-on-surface-variant">
           {
             "\n        Execute full development loops right from your command line or editor palette. Watch Nakka discover test regressions and heal them in real-time.\n      "
           }
@@ -21,16 +21,16 @@ export default function TerminalDemo() {
       <div className="max-w-4xl mx-auto rounded-xl bg-surface-container-lowest shadow-2xl overflow-hidden font-code-md text-code-md border border-outline-variant/30">
         <div className="bg-surface-container-low px-4 py-2.5 flex items-center justify-between gap-3 border-b border-outline-variant/20">
           <div className="flex items-center gap-2 min-w-0">
-            <div className="w-2.5 h-2.5 rounded-full bg-outline-variant"></div>
-            <div className="w-2.5 h-2.5 rounded-full bg-outline-variant"></div>
-            <div className="w-2.5 h-2.5 rounded-full bg-outline-variant"></div>
+            <div className="w-2.5 h-2.5 shrink-0 rounded-full bg-outline-variant"></div>
+            <div className="w-2.5 h-2.5 shrink-0 rounded-full bg-outline-variant"></div>
+            <div className="w-2.5 h-2.5 shrink-0 rounded-full bg-outline-variant"></div>
             <span className="text-outline text-[12px] ml-2 font-mono truncate">
               zsh — nakka-runner — 80×24
             </span>
           </div>
           <div className="flex items-center gap-3 shrink-0">
             <button
-              className="flex items-center gap-1 text-[11px] px-2 py-0.5 rounded bg-surface-container hover:bg-surface-bright text-primary hover:text-white transition-colors"
+              className="flex min-h-11 sm:min-h-0 items-center gap-1 text-[11px] px-2 py-0.5 rounded bg-surface-container hover:bg-surface-bright text-primary hover:text-white transition-colors"
               onClick={() => setRun((run) => run + 1)}
             >
               <span className="material-symbols-outlined text-[13px]">
@@ -45,7 +45,7 @@ export default function TerminalDemo() {
         </div>
 
         <div
-          className="p-4 sm:p-6 space-y-3 font-mono text-[12px] sm:text-[13px] leading-[20px] sm:leading-[22px] select-text min-h-[300px] break-words"
+          className="p-4 sm:p-6 space-y-3 font-mono text-[12px] sm:text-[13px] leading-[20px] sm:leading-[22px] select-text min-h-[300px] [overflow-wrap:anywhere]"
           id="terminal-content"
         >
           <div className="flex items-center gap-2 text-on-surface flex-wrap">

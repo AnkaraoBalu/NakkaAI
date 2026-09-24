@@ -12,7 +12,7 @@ export default function ProviderStrip({ selectedProvider, onSelectProvider }) {
             "\n        Seamlessly route requests to state-of-the-art hosted intelligence or run private, zero-leakage models locally on your metal.\n      "
           }
         </p>
-        <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-4 pt-4">
+        <div className="flex w-full flex-wrap items-center justify-center gap-3 sm:gap-4 pt-4">
           <button
             id="provider-pill-openai"
             onClick={() => onSelectProvider("openai")}
@@ -22,7 +22,7 @@ export default function ProviderStrip({ selectedProvider, onSelectProvider }) {
             <span className="font-code-md text-code-md font-semibold text-on-surface whitespace-nowrap">
               OpenAI
             </span>
-            <span className="w-1 h-1 rounded-full bg-outline"></span>
+            <span className="hidden sm:block w-1 h-1 shrink-0 rounded-full bg-outline"></span>
             <span className="font-code-md text-[12px] text-outline">
               GPT-5.4 · GPT-5 mini
             </span>
@@ -37,7 +37,7 @@ export default function ProviderStrip({ selectedProvider, onSelectProvider }) {
             <span className="font-code-md text-code-md font-semibold text-tertiary whitespace-nowrap">
               Anthropic
             </span>
-            <span className="w-1 h-1 rounded-full bg-tertiary"></span>
+            <span className="hidden sm:block w-1 h-1 shrink-0 rounded-full bg-tertiary"></span>
             <span className="font-code-md text-[12px] text-on-surface-variant">
               Claude Sonnet 5 · Opus 5.5
             </span>
@@ -52,7 +52,7 @@ export default function ProviderStrip({ selectedProvider, onSelectProvider }) {
             <span className="font-code-md text-code-md font-semibold text-secondary whitespace-nowrap">
               Ollama (100% Local)
             </span>
-            <span className="w-1 h-1 rounded-full bg-secondary"></span>
+            <span className="hidden sm:block w-1 h-1 shrink-0 rounded-full bg-secondary"></span>
             <span className="font-code-md text-[12px] text-outline">
               DeepSeek-R1 · Llama 3.3
             </span>

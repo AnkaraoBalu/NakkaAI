@@ -17,22 +17,22 @@ export default function InstallSection() {
           <h2 className="font-headline-lg text-headline-lg-mobile sm:text-headline-lg text-on-surface max-w-2xl mb-space-md">
             Bring an agent into your editor today.
           </h2>
-          <p className="font-body-lg text-body-lg text-on-surface-variant max-w-xl mb-space-xl">
+          <p className="font-body-lg text-body-md sm:text-body-lg text-on-surface-variant max-w-xl mb-space-xl">
             Free, open-source, and ready to use with your own API key or a local
             model. No Nakka account required.
           </p>
           <div className="w-full max-w-lg p-3 mb-space-xl rounded bg-surface-container-lowest font-code-md text-[12px] sm:text-code-lg flex items-center justify-between gap-3 text-left">
             <div className="flex items-center gap-2 min-w-0">
               <span className="text-outline shrink-0">$</span>
-              <code className="text-primary truncate">
+              <code className="text-primary min-w-0 whitespace-normal [overflow-wrap:anywhere]">
                 {INSTALL_COMMAND}
               </code>
             </div>
             <CopyInstallButton />
           </div>
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-space-md w-full sm:w-auto">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-space-md w-full max-w-sm sm:max-w-none sm:w-auto sm:flex-wrap">
             <a
-              className="inline-flex items-center justify-center gap-space-sm px-space-xl py-3 rounded bg-primary-container text-on-primary-container font-body-md text-body-md font-semibold hover:brightness-110 shadow-[0_0_24px_rgba(56,189,248,0.25)] transition-all"
+              className="inline-flex items-center justify-center gap-space-sm min-h-12 px-3 sm:px-space-xl py-3 rounded bg-primary-container text-on-primary-container font-body-md text-body-md font-semibold hover:brightness-110 shadow-[0_0_24px_rgba(56,189,248,0.25)] transition-all"
               href={`vscode:extension/${EXTENSION_ID}`}
             >
               <span className="material-symbols-outlined text-[20px]">
@@ -41,7 +41,7 @@ export default function InstallSection() {
               <span className="">Install for VS Code</span>
             </a>
             <a
-              className="inline-flex items-center justify-center gap-space-sm px-space-xl py-3 rounded bg-surface-container-high text-on-surface font-body-md text-body-md hover:bg-surface-bright transition-colors"
+              className="inline-flex items-center justify-center gap-space-sm min-h-12 px-3 sm:px-space-xl py-3 rounded bg-surface-container-high text-on-surface font-body-md text-body-md hover:bg-surface-bright transition-colors"
               href={MARKETPLACE_URL}
               target="_blank"
               rel="noopener"
