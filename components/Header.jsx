@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import logo from "../logo-header.png";
+import logo from "../logo3.png";
 export default function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
   useEffect(() => {
@@ -26,7 +26,7 @@ export default function Header() {
           >
             <img
               alt="Nakka logo"
-              className="h-10 sm:h-12 w-10 sm:w-12 shrink-0 object-contain"
+              className="h-10 sm:h-12 w-10 sm:w-12 shrink-0 rounded-lg object-contain"
               src={logo}
             />
             <span className="font-headline-sm text-headline-sm text-on-surface tracking-tight font-medium">

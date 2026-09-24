@@ -1,5 +1,5 @@
 import { MARKETPLACE_URL } from "./extension.js";
-import logo from "../logo-header.png";
+import logo from "../logo3.png";
 
 const footerLinks = [
   { label: "VS Code Marketplace", href: MARKETPLACE_URL, external: true },
@@ -19,7 +19,7 @@ export default function Footer() {
             <div className="flex items-center gap-space-sm">
               <img
                 alt=""
-                className="h-10 w-10 shrink-0 object-contain"
+                className="h-10 w-10 shrink-0 rounded-lg object-contain"
                 src={logo}
               />
               <span className="font-headline-sm text-headline-sm text-on-surface tracking-tight font-medium">
