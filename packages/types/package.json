@@ -1,0 +1,17 @@
+{
+  "name": "@nakka/types",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./users": "./users.ts",
+    "./extension": "./extension.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc"
+  },
+  "devDependencies": {
+    "@nakka/tsconfig": "workspace:*",
+    "typescript": "^5.8.3"
+  }
+}

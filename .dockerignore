@@ -1,5 +1,6 @@
-node_modules
-dist
+**/node_modules
+**/dist
+**/.turbo
 .git
 .DS_Store
-screen.png
+docs

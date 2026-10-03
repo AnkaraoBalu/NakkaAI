@@ -1,0 +1,4 @@
+{
+  "extends": "@nakka/tsconfig/base.json",
+  "include": ["*.ts"]
+}

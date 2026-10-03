@@ -1,0 +1,20 @@
+{
+  "name": "@nakka/tailwind-config",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc"
+  },
+  "peerDependencies": {
+    "tailwindcss": "^3.4.0"
+  },
+  "devDependencies": {
+    "@nakka/tsconfig": "workspace:*",
+    "tailwindcss": "^3.4.17",
+    "typescript": "^5.8.3"
+  }
+}

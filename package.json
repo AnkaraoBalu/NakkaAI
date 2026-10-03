@@ -1,25 +1,30 @@
 {
-  "name": "nakka-landing-page",
-  "version": "1.0.0",
+  "name": "nakka",
   "private": true,
-  "type": "module",
+  "packageManager": "yarn@4.9.2",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
   "scripts": {
-    "start": "vite",
-    "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview"
-  },
-  "dependencies": {
-    "geist": "^1.7.2",
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0",
-    "react-router-dom": "^7.0.0"
+    "dev": "turbo run dev",
+    "ui:dev": "turbo run dev --filter=@nakka/frontend",
+    "ui:build": "turbo run build --filter=@nakka/frontend",
+    "ui:preview": "turbo run preview --filter=@nakka/frontend",
+    "backend:dev": "turbo run dev --filter=@nakka/backend",
+    "backend:build": "turbo run build --filter=@nakka/backend",
+    "backend:start": "yarn workspace @nakka/backend start",
+    "build": "turbo run build",
+    "preview": "turbo run preview",
+    "typecheck": "turbo run typecheck",
+    "backend:test": "yarn workspace @nakka/backend test",
+    "backend:migrate": "yarn workspace @nakka/backend db:migrate"
   },
   "devDependencies": {
-    "@vitejs/plugin-react": "^4.3.4",
-    "autoprefixer": "^10.4.21",
-    "postcss": "^8.5.3",
-    "tailwindcss": "^3.4.17",
-    "vite": "^6.1.0"
+    "turbo": "^2.5.0",
+    "typescript": "^5.8.3"
+  },
+  "engines": {
+    "node": ">=22"
   }
 }

@@ -1,0 +1,7 @@
+{
+  "extends": "@nakka/tsconfig/react-app.json",
+  "compilerOptions": {
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.app.tsbuildinfo"
+  },
+  "include": ["src"]
+}
