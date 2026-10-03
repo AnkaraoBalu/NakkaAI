@@ -113,7 +113,9 @@ The frontend image serves the built site with nginx at http://localhost:3000 and
 Cloudflare Pages builds from GitHub on every push to `main`; it does not use the Dockerfile.
 
 - Root directory: leave empty (the repo root)
-- Build command: `yarn build`
+- Build command: `yarn install --immutable && yarn ui:build`
 - Build output directory: `apps/frontend/dist`
+
+This command explicitly installs dependencies before building only the frontend. If `SKIP_DEPENDENCY_INSTALL` is set in Pages, automatic installation is skipped, so a build command without an install step fails with `turbo: not found`. Keep the explicit install step when using that setting. Use the repository's pinned Yarn version rather than npm to install workspace dependencies.
 
 `.nvmrc` pins Node 22. Pages serves `index.html` for unknown paths because the build has no `404.html`.
