@@ -9,8 +9,10 @@ sends the verification code. After verification, the browser activates the Clerk
 session and goes to `/sso-callback/complete`. The backend verifies the Clerk token
 and exchanges it for a Nakka session at `POST /api/auth/oauth/clerk`.
 
-The backend stores the stable Clerk user ID in `users.clerk_user_id`, which was
-already added by migration `004_add_clerk_oauth.sql`. Email-only accounts do not
+The backend stores the stable Clerk user ID in `users.clerk_user_id`. Migration
+`007_restore_clerk_user_id.sql` restores this column after migration 005 removed
+it, and backfills unambiguous existing social links. Run all database migrations
+before deploying the backend. Email-only accounts do not
 need a Google/GitHub identity. Their Nakka username is collected as signup metadata,
 validated on the server, and made unique if another signup claims it first.
 Metadata is never used as proof of email ownership.
