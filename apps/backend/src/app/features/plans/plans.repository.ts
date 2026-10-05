@@ -1,9 +1,15 @@
 import { Inject, Injectable } from "@nestjs/common";
 import type pg from "pg";
-import type { Plan, PlanModel, PlanWindow, Provider } from "@nakka/types/plans";
+import type {
+  Plan,
+  PlanModel,
+  PlanPricing,
+  PlanWindow,
+  Provider,
+} from "@nakka/types/plans";
 import { DATABASE, TABLES } from "../../common/database/constants.js";
 
-export type { Plan, PlanModel, PlanWindow };
+export type { Plan, PlanModel, PlanPricing, PlanWindow };
 
 export const DEFAULT_PLAN = "free";
 
@@ -27,10 +33,11 @@ export interface PlanModelRow {
   output_price: string | number;
   cache_read_price: string | number | null;
   cache_write_price: string | number | null;
+  premium: boolean;
 }
 
 export const MODEL_COLUMNS =
-  "model_id, provider, upstream_model, input_price, output_price, cache_read_price, cache_write_price";
+  "model_id, provider, upstream_model, input_price, output_price, cache_read_price, cache_write_price, premium";
 
 export const toPlanModel = (row: PlanModelRow): PlanModel => ({
   modelId: row.model_id,
@@ -40,6 +47,7 @@ export const toPlanModel = (row: PlanModelRow): PlanModel => ({
   outputPrice: Number(row.output_price),
   cacheReadPrice: row.cache_read_price === null ? null : Number(row.cache_read_price),
   cacheWritePrice: row.cache_write_price === null ? null : Number(row.cache_write_price),
+  premium: row.premium,
 });
 
 export interface ActivePlan extends Plan {
@@ -67,7 +75,7 @@ export class PlansRepository {
 
   async list(): Promise<Plan[]> {
     const { rows } = await this.db.query<Plan>(
-      `SELECT id, name, windows FROM ${TABLES.PLANS}
+      `SELECT id, name, windows, pricing FROM ${TABLES.PLANS}
        ORDER BY id = '${DEFAULT_PLAN}' DESC, id`,
     );
     return rows;
@@ -81,10 +89,15 @@ export class PlansRepository {
     return Boolean(rowCount);
   }
 
-  async update(planId: string, name: string, windows: PlanWindow[]): Promise<void> {
+  async update(
+    planId: string,
+    name: string,
+    windows: PlanWindow[],
+    pricing: PlanPricing | null,
+  ): Promise<void> {
     await this.db.query(
-      `UPDATE ${TABLES.PLANS} SET name = $2, windows = $3 WHERE id = $1`,
-      [planId, name, JSON.stringify(windows)],
+      `UPDATE ${TABLES.PLANS} SET name = $2, windows = $3, pricing = $4 WHERE id = $1`,
+      [planId, name, JSON.stringify(windows), pricing && JSON.stringify(pricing)],
     );
   }
 
@@ -113,8 +126,8 @@ export class PlansRepository {
         await client.query(
           `INSERT INTO ${TABLES.PLAN_MODELS}
              (plan_id, model_id, provider, upstream_model, sort_order,
-              input_price, output_price, cache_read_price, cache_write_price)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+              input_price, output_price, cache_read_price, cache_write_price, premium)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
           [
             planId,
             model.modelId,
@@ -125,6 +138,7 @@ export class PlansRepository {
             model.outputPrice,
             model.cacheReadPrice,
             model.cacheWritePrice,
+            model.premium,
           ],
         );
       }

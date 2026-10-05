@@ -1,6 +1,6 @@
 // The admin dashboard (/api/admin/*). Admins are separate accounts from users.
 import type { UsageWindow } from "./extension.js";
-import type { Plan, PlanModel, PlanWindow, Provider } from "./plans.js";
+import type { Plan, PlanModel, PlanPricing, PlanWindow, Provider } from "./plans.js";
 import type { UsageTotals } from "./usage.js";
 import type { SignedInWith } from "./users.js";
 
@@ -70,6 +70,7 @@ export interface AdminPlan extends Plan {
 export interface UpdatePlanRequest {
   name: string;
   windows: PlanWindow[];
+  pricing?: PlanPricing | null;
 }
 
 export interface SetPlanModelsRequest {

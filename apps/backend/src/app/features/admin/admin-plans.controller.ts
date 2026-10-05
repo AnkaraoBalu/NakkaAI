@@ -20,7 +20,7 @@ export class AdminPlansController {
     @Body() dto: UpdatePlanDto,
     @CurrentAdminId() adminId: string,
   ) {
-    return this.plans.update(planId, dto.name, dto.windows, adminId);
+    return this.plans.update(planId, dto.name, dto.windows, dto.pricing ?? null, adminId);
   }
 
   @Put(":id/models")

@@ -4,6 +4,7 @@ import { Transform, Type } from "class-transformer";
 import {
   ArrayMaxSize,
   IsArray,
+  IsBoolean,
   IsIn,
   IsNumber,
   IsOptional,
@@ -54,6 +55,11 @@ export class PlanModelDto implements PlanModel {
   @Min(0)
   @Max(10_000)
   cacheWritePrice: number | null = null;
+
+  // Also counts against the plan's premium-only window.
+  @IsOptional()
+  @IsBoolean()
+  premium: boolean = false;
 }
 
 export class SetPlanModelsDto implements SetPlanModelsRequest {

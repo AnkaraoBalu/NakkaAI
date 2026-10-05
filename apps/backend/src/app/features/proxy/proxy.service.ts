@@ -2,6 +2,7 @@ import { Inject, Injectable, Logger } from "@nestjs/common";
 import type { Request, Response } from "express";
 import { hashToken } from "../auth/session.service.js";
 import type { Provider } from "../provider-keys/provider-keys.config.js";
+import { windowsFor } from "../plans/plans.service.js";
 import { ProviderKeysService } from "../provider-keys/provider-keys.service.js";
 import { proxyConfig, type ProxyConfig } from "./proxy.config.js";
 import { ProxyRepository } from "./proxy.repository.js";
@@ -108,20 +109,25 @@ export class ProxyService {
     // 3. Allowance left? Like Claude Code, a request may start while every
     //    window is under 100%; its cost is added when it ends. The first
     //    used-up window (in plan order) answers 402.
-    const usedUp = plan.windows
+    const windows = windowsFor(plan.windows, model);
+    const usedUp = windows
       .map((window) => ({
         window,
         row: access.usage.find((u) => u.windowId === window.id),
       }))
       .find(({ window, row }) => row && row.used >= window.limit);
     if (usedUp?.row) {
+      // A one-time credit has no reset time: upgrading is the only way on.
+      const oneTime = usedUp.window.duration_hours === null;
       return sendError(
         res,
         402,
-        `Your ${usedUp.window.label} allowance is used up.`,
+        oneTime
+          ? `Your ${usedUp.window.label} is used up. Upgrade your plan to keep going.`
+          : `Your ${usedUp.window.label} allowance is used up.`,
         {
           window: usedUp.window.label,
-          resetsAt: usedUp.row.resetsAt.toISOString(),
+          ...(oneTime ? {} : { resetsAt: usedUp.row.resetsAt.toISOString() }),
           ...(this.config.manageUrl
             ? { manageUrl: this.config.manageUrl }
             : {}),
@@ -260,7 +266,7 @@ export class ProxyService {
           ...tokens,
           costMicros: requestCostMicros(tokens, model),
         },
-        plan.windows,
+        windows,
       );
     } catch (error) {
       this.logger.error(`Couldn't record usage: ${(error as Error).message}`);

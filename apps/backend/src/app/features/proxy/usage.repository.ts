@@ -20,7 +20,8 @@ export class UsageRepository {
   constructor(@Inject(DATABASE) private readonly db: pg.Pool) {}
 
   // One row per answered AI request, and its cost added to every allowance
-  // window. A window whose reset time has passed starts again from this request.
+  // window it counts against (see windowsFor in plans.service). A window whose reset time has
+  // passed starts again from this request; a one-time credit never resets.
   async record(usage: UsageRecord, windows: PlanWindow[]) {
     const client = await this.db.connect();
     try {
@@ -44,7 +45,8 @@ export class UsageRepository {
       for (const window of windows) {
         await client.query(
           `INSERT INTO ${TABLES.USAGE_WINDOWS} AS w (user_id, window_id, used, resets_at)
-           VALUES ($1, $2, $3, now() + make_interval(hours => $4))
+           VALUES ($1, $2, $3, CASE WHEN $4::int IS NULL THEN 'infinity'::timestamptz
+                                    ELSE now() + make_interval(hours => $4::int) END)
            ON CONFLICT (user_id, window_id) DO UPDATE SET
              used = CASE WHEN w.resets_at <= now() THEN EXCLUDED.used
                          ELSE w.used + EXCLUDED.used END,

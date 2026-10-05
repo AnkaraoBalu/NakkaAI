@@ -1,7 +1,12 @@
 import { Injectable } from "@nestjs/common";
 import type { WindowSpend } from "@nakka/types/admin";
 import type { UsageWindow } from "@nakka/types/extension";
-import { PlansRepository, type Plan } from "./plans.repository.js";
+import {
+  PlansRepository,
+  type Plan,
+  type PlanModel,
+  type PlanWindow,
+} from "./plans.repository.js";
 
 const HOUR = 60 * 60 * 1000;
 
@@ -9,6 +14,11 @@ const HOUR = 60 * 60 * 1000;
 // means the window really is used up.
 export const percentUsed = (spent: number, limit: number) =>
   limit > 0 ? Math.min(100, Math.floor((spent / limit) * 100)) : 0;
+
+// The windows a request on this model counts against: all of them, except
+// that premium-only windows count premium models only.
+export const windowsFor = (windows: PlanWindow[], model: Pick<PlanModel, "premium">) =>
+  windows.filter((window) => !window.premium_only || model.premium);
 
 // Allowance windows as users see them. The VS Code extension (GET /account),
 // the website's Usage page and the admin user page all use this, so they agree.
@@ -35,11 +45,16 @@ export class PlansService {
         label: window.label,
         used: percentUsed(spent, window.limit),
         limit: 100,
-        // A window that hasn't started yet would reset this long after first use.
-        resetsAt: (
-          current?.resetsAt ??
-          new Date(Date.now() + window.duration_hours * HOUR)
-        ).toISOString(),
+        // A one-time credit never resets. A window that hasn't started yet
+        // would reset this long after first use.
+        ...(window.duration_hours === null
+          ? {}
+          : {
+              resetsAt: (
+                current?.resetsAt ??
+                new Date(Date.now() + window.duration_hours * HOUR)
+              ).toISOString(),
+            }),
         spentMicros: spent,
         limitMicros: window.limit,
       };

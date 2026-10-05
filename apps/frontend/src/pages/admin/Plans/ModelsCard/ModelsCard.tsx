@@ -16,6 +16,7 @@ interface Row {
   outputPrice: string;
   cacheReadPrice: string;
   cacheWritePrice: string;
+  premium: boolean;
 }
 
 const PRICE = /^\d+(\.\d{1,4})?$/;
@@ -40,6 +41,7 @@ const toRows = (models: PlanModel[]): Row[] =>
     outputPrice: model.outputPrice ? String(model.outputPrice) : "",
     cacheReadPrice: priceText(model.cacheReadPrice),
     cacheWritePrice: priceText(model.cacheWritePrice),
+    premium: model.premium,
   }));
 
 const optionalPrice = (text: string) => (text.trim() ? Number(text) : null);
@@ -53,6 +55,7 @@ const toModels = (rows: Row[]): PlanModel[] =>
     outputPrice: Number(row.outputPrice),
     cacheReadPrice: optionalPrice(row.cacheReadPrice),
     cacheWritePrice: optionalPrice(row.cacheWritePrice),
+    premium: row.premium,
   }));
 
 function validate(rows: Row[]): string {
@@ -115,7 +118,8 @@ export default function ModelsCard({ plan, onSaved }: { plan: AdminPlan; onSaved
           name sent to the provider, if it's different (for example a dated version).
           Prices are what the provider charges you, in dollars per million tokens, from
           their pricing page; they decide how fast each request uses up the allowance.
-          Cache prices left blank are charged at the input price.
+          Cache prices left blank are charged at the input price. Mark expensive models
+          (Opus-class) as premium: they also count against the plan's premium-only window.
         </p>
       </div>
 
@@ -179,6 +183,14 @@ export default function ModelsCard({ plan, onSaved }: { plan: AdminPlan; onSaved
                   </label>
                 ))}
                 <span className={styles.perMillion}>per 1M tokens</span>
+                <label className={styles.premium} title="Also counts against the plan's premium-only weekly window">
+                  <input
+                    type="checkbox"
+                    checked={row.premium}
+                    onChange={(event) => update(index, { premium: event.target.checked })}
+                  />
+                  Premium model
+                </label>
               </div>
               <div className={styles.rowActions}>
                 <button type="button" className={styles.iconButton} disabled={index === 0} onClick={() => move(index, -1)} aria-label="Move up">
@@ -222,6 +234,7 @@ export default function ModelsCard({ plan, onSaved }: { plan: AdminPlan; onSaved
                   outputPrice: "",
                   cacheReadPrice: "",
                   cacheWritePrice: "",
+                  premium: false,
                 },
               ])
             }

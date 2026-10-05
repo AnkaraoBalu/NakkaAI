@@ -1,8 +1,10 @@
 import { useState, type FormEvent } from "react";
 import type { AdminPlan } from "@nakka/types/admin";
-import type { PlanWindow } from "@nakka/types/plans";
+import type { PlanPricing, PlanWindow } from "@nakka/types/plans";
 import { adminApi } from "../../../../api/admin";
 import { useRequest } from "../../../../components/Login/useRequest";
+import { FREE_PLAN_ID } from "../../../../constants/plans";
+import PricingCalculator, { type CalculatedBudgets } from "../PricingCalculator";
 import { styles } from "./WindowsCard.style";
 
 interface Row {
@@ -10,25 +12,33 @@ interface Row {
   // Dollars of provider cost, as typed.
   limit: string;
   hours: string;
+  // Never resets: a one-time credit.
+  oneTime: boolean;
+  // Counts only premium models.
+  premium: boolean;
 }
 
-const PRESETS: Row[] = [
-  { label: "5-hour", limit: "3", hours: "5" },
-  { label: "Weekly", limit: "25", hours: "168" },
-];
 const MICROS = 1_000_000;
 const DOLLARS = /^\d+(\.\d{1,2})?$/;
 const MAX_WINDOWS = 4;
+const FREE_CREDIT: Row = { label: "Free credit", limit: "0.25", hours: "", oneTime: true, premium: false };
 
-// A window's id is derived from its length, so editing a label or limit keeps
-// users' current counts, while a new length starts a fresh count.
-const idFor = (hours: number) => (hours === 168 ? "week" : `${hours}h`);
+// A window's id comes from its kind and length, so editing a label or budget
+// keeps users' current usage, while a new length starts a fresh count.
+function idFor(row: Row) {
+  if (row.oneTime) return "credit";
+  const hours = Number(row.hours);
+  const base = hours === 168 ? "week" : `${hours}h`;
+  return row.premium ? `${base}-premium` : base;
+}
 
 const toRows = (windows: PlanWindow[]): Row[] =>
   windows.map((planWindow) => ({
     label: planWindow.label,
     limit: String(planWindow.limit / MICROS),
-    hours: String(planWindow.duration_hours),
+    hours: planWindow.duration_hours === null ? "" : String(planWindow.duration_hours),
+    oneTime: planWindow.duration_hours === null,
+    premium: Boolean(planWindow.premium_only),
   }));
 
 function validate(name: string, rows: Row[]): string {
@@ -37,50 +47,73 @@ function validate(name: string, rows: Row[]): string {
     if (!row.label.trim()) return "Every window needs a label.";
     if (!DOLLARS.test(row.limit) || Number(row.limit) < 0.01)
       return "Budgets are dollar amounts of at least $0.01 (e.g. 3 or 2.50).";
-    if (!/^\d+$/.test(row.hours) || Number(row.hours) < 1 || Number(row.hours) > 8784)
-      return "Window length must be between 1 hour and a year.";
+    if (!row.oneTime && (!/^\d+$/.test(row.hours) || Number(row.hours) < 1 || Number(row.hours) > 8784))
+      return "A resetting window needs a length between 1 hour and a year.";
   }
-  const hours = rows.map((row) => Number(row.hours));
-  if (new Set(hours).size !== hours.length) return "Two windows can't have the same length.";
+  const ids = rows.map(idFor);
+  if (new Set(ids).size !== ids.length)
+    return "Two windows are the same kind and length; change one or remove it.";
   return "";
 }
 
-// The plan's name and allowance windows (e.g. $3 of API cost per 5 hours, $25 per week).
+const sameWindows = (rows: Row[], windows: PlanWindow[]) =>
+  JSON.stringify(rows) === JSON.stringify(toRows(windows));
+
+// The plan's name and allowance windows: the Free plan's one-time credit, or a
+// paid plan's 5-hour session, weekly and premium-weekly budgets.
 export default function WindowsCard({ plan, onSaved }: { plan: AdminPlan; onSaved: (plan: AdminPlan) => void }) {
   const [name, setName] = useState(plan.name);
   const [rows, setRows] = useState<Row[]>(() => toRows(plan.windows));
+  const [pricing, setPricing] = useState<PlanPricing | null>(plan.pricing ?? null);
   const [saved, setSaved] = useState(false);
   const { busy, error, setError, run } = useRequest();
+  const free = plan.id === FREE_PLAN_ID;
 
   const dirty =
-    name !== plan.name || JSON.stringify(rows) !== JSON.stringify(toRows(plan.windows));
+    name !== plan.name ||
+    !sameWindows(rows, plan.windows) ||
+    JSON.stringify(pricing) !== JSON.stringify(plan.pricing ?? null);
 
-  const update = (index: number, patch: Partial<Row>) => {
+  const change = (next: Row[] | ((current: Row[]) => Row[])) => {
     setSaved(false);
-    setRows((current) => current.map((row, i) => (i === index ? { ...row, ...patch } : row)));
+    setError("");
+    setRows(next);
   };
+  const update = (index: number, patch: Partial<Row>) =>
+    change((current) => current.map((row, i) => (i === index ? { ...row, ...patch } : row)));
+
+  function applyBudgets(next: PlanPricing, budgets: CalculatedBudgets) {
+    setPricing(next);
+    change([
+      { label: "Session (5hr)", limit: budgets.session.toFixed(2), hours: "5", oneTime: false, premium: false },
+      { label: "Weekly (7 day)", limit: budgets.weekly.toFixed(2), hours: "168", oneTime: false, premium: false },
+      ...(next.premiumSharePercent > 0 && next.premiumSharePercent < 100
+        ? [{ label: "Premium models (7 day)", limit: budgets.premiumWeekly.toFixed(2), hours: "168", oneTime: false, premium: true }]
+        : []),
+    ]);
+  }
 
   async function save(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const problem = validate(name, rows);
     if (problem) return setError(problem);
     const windows: PlanWindow[] = rows.map((row) => ({
-      id: idFor(Number(row.hours)),
+      id: idFor(row),
       label: row.label.trim(),
       limit: Math.round(Number(row.limit) * MICROS),
-      duration_hours: Number(row.hours),
+      duration_hours: row.oneTime ? null : Number(row.hours),
+      ...(row.premium ? { premium_only: true } : {}),
     }));
-    const result = await run(() => adminApi.updatePlan(plan.id, { name: name.trim(), windows }));
+    const result = await run(() =>
+      adminApi.updatePlan(plan.id, { name: name.trim(), windows, pricing }),
+    );
     if (!result) return;
     onSaved(result);
     setName(result.name);
     setRows(toRows(result.windows));
+    setPricing(result.pricing ?? null);
     setSaved(true);
   }
-
-  const missingPresets = PRESETS.filter(
-    (preset) => !rows.some((row) => row.hours === preset.hours),
-  );
 
   return (
     <form className={styles.card} onSubmit={save} noValidate aria-labelledby="windows-title">
@@ -88,10 +121,11 @@ export default function WindowsCard({ plan, onSaved }: { plan: AdminPlan; onSave
         <h2 id="windows-title" className={styles.title}>Name and allowances</h2>
         <p className={styles.description}>
           Like Claude Code, allowances measure cost, not requests: each request uses up
-          what it cost us (its tokens × the model's prices) from every window, so a long
-          request on a big model uses far more than a short one on a small model. Users
-          see the percent used and when it resets, never dollars. With no windows the
-          plan is unlimited.
+          what it cost you (its tokens × the model's prices) from every window it counts
+          against. Users see the percent used, never dollars.{" "}
+          {free
+            ? "Give Free a one-time credit: when it's used up it doesn't come back, and the user has to upgrade."
+            : "Paid plans get a 5-hour session and a weekly budget, plus a smaller weekly budget for premium models."}
         </p>
       </div>
 
@@ -108,12 +142,15 @@ export default function WindowsCard({ plan, onSaved }: { plan: AdminPlan; onSave
         />
       </label>
 
+      {!free && <PricingCalculator initial={pricing} onApply={applyBudgets} />}
+
       {rows.length ? (
         <div className={styles.rows}>
           <div className={styles.rowHead} aria-hidden="true">
-            <span>Label</span>
+            <span>Label (users see this)</span>
             <span>Budget (USD of API cost)</span>
-            <span>Every (hours)</span>
+            <span>Resets</span>
+            <span>Counts</span>
             <span />
           </div>
           {rows.map((row, index) => (
@@ -135,21 +172,49 @@ export default function WindowsCard({ plan, onSaved }: { plan: AdminPlan; onSave
                   onChange={(event) => update(index, { limit: event.target.value.replace(/[^\d.]/g, "") })}
                 />
               </span>
-              <input
-                className={styles.input}
-                aria-label="Window length in hours"
-                inputMode="numeric"
-                value={row.hours}
-                onChange={(event) => update(index, { hours: event.target.value.replace(/\D/g, "") })}
-              />
+              <span className={styles.resets}>
+                <select
+                  className={styles.select}
+                  aria-label="When the window resets"
+                  value={row.oneTime ? "never" : "hours"}
+                  onChange={(event) =>
+                    update(index, {
+                      oneTime: event.target.value === "never",
+                      premium: event.target.value === "never" ? false : row.premium,
+                    })
+                  }
+                >
+                  <option value="hours">Every</option>
+                  <option value="never">Never (one-time)</option>
+                </select>
+                {!row.oneTime && (
+                  <span className={styles.hours}>
+                    <input
+                      className={styles.hoursInput}
+                      aria-label="Window length in hours"
+                      inputMode="numeric"
+                      value={row.hours}
+                      onChange={(event) => update(index, { hours: event.target.value.replace(/\D/g, "") })}
+                    />
+                    <span className={styles.unit}>h</span>
+                  </span>
+                )}
+              </span>
+              <select
+                className={styles.select}
+                aria-label="Which models count"
+                value={row.premium ? "premium" : "all"}
+                disabled={row.oneTime}
+                onChange={(event) => update(index, { premium: event.target.value === "premium" })}
+              >
+                <option value="all">All models</option>
+                <option value="premium">Premium only</option>
+              </select>
               <button
                 type="button"
                 className={styles.removeButton}
                 aria-label={`Remove ${row.label || "window"}`}
-                onClick={() => {
-                  setSaved(false);
-                  setRows((current) => current.filter((_, i) => i !== index));
-                }}
+                onClick={() => change((current) => current.filter((_, i) => i !== index))}
               >
                 <span className="material-symbols-outlined text-[18px]">close</span>
               </button>
@@ -165,30 +230,21 @@ export default function WindowsCard({ plan, onSaved }: { plan: AdminPlan; onSave
 
       {rows.length < MAX_WINDOWS && (
         <div className={styles.addRow}>
-          {missingPresets.map((preset) => (
-            <button
-              key={preset.hours}
-              type="button"
-              className={styles.secondaryButton}
-              onClick={() => {
-                setSaved(false);
-                setRows((current) => [...current, preset]);
-              }}
-            >
-              <span className="material-symbols-outlined text-[18px]">add</span>
-              {preset.label} window
+          {free && !rows.some((row) => row.oneTime) && (
+            <button type="button" className={styles.secondaryButton} onClick={() => change([FREE_CREDIT])}>
+              <span className="material-symbols-outlined text-[18px]">redeem</span>
+              One-time free credit ($0.25)
             </button>
-          ))}
+          )}
           <button
             type="button"
             className={styles.secondaryButton}
-            onClick={() => {
-              setSaved(false);
-              setRows((current) => [...current, { label: "", limit: "", hours: "" }]);
-            }}
+            onClick={() =>
+              change((current) => [...current, { label: "", limit: "", hours: "", oneTime: false, premium: false }])
+            }
           >
             <span className="material-symbols-outlined text-[18px]">add</span>
-            Custom window
+            Add window
           </button>
         </div>
       )}
@@ -212,6 +268,7 @@ export default function WindowsCard({ plan, onSaved }: { plan: AdminPlan; onSave
             onClick={() => {
               setName(plan.name);
               setRows(toRows(plan.windows));
+              setPricing(plan.pricing ?? null);
               setError("");
             }}
           >

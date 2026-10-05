@@ -6,8 +6,13 @@ export const styles = {
   fieldLabel: "font-label-md text-label-md text-on-surface-variant font-medium",
   rows: "flex flex-col gap-space-sm",
   rowHead:
-    "hidden sm:grid grid-cols-[2fr_1fr_1fr_auto] gap-space-sm px-1 font-label-sm text-label-sm uppercase tracking-wider text-outline font-semibold",
-  row: "grid grid-cols-[1fr_1fr_auto] sm:grid-cols-[2fr_1fr_1fr_auto] gap-space-sm items-center [&>:first-child]:col-span-3 sm:[&>:first-child]:col-span-1",
+    "hidden md:grid grid-cols-[1.6fr_1fr_1.4fr_1fr_auto] gap-space-sm px-1 font-label-sm text-label-sm uppercase tracking-wider text-outline font-semibold",
+  row: "grid grid-cols-2 md:grid-cols-[1.6fr_1fr_1.4fr_1fr_auto] gap-space-sm items-center p-space-sm md:p-0 rounded-xl bg-surface-container-low/50 md:bg-transparent [&>:first-child]:col-span-2 md:[&>:first-child]:col-span-1",
+  resets: "flex items-center gap-space-xs",
+  select: adminStyles.input + " pr-8 disabled:opacity-50",
+  hours: "relative block w-24 shrink-0",
+  hoursInput: adminStyles.input + " pr-7",
+  unit: "absolute right-3 top-1/2 -translate-y-1/2 font-body-sm text-body-sm text-outline pointer-events-none",
   money: "relative block",
   currency:
     "absolute left-space-md top-1/2 -translate-y-1/2 font-body-md text-body-md text-outline pointer-events-none",

@@ -1,15 +1,19 @@
-import type { PlanWindow } from "@nakka/types/plans";
+import type { PlanPricing, PlanWindow } from "@nakka/types/plans";
 import type { UpdatePlanRequest } from "@nakka/types/admin";
 import { Transform, Type } from "class-transformer";
 import {
   ArrayMaxSize,
   IsArray,
+  IsBoolean,
   IsInt,
+  IsNumber,
+  IsOptional,
   IsString,
   Length,
   Matches,
   Max,
   Min,
+  ValidateIf,
   ValidateNested,
 } from "class-validator";
 
@@ -33,10 +37,44 @@ export class PlanWindowDto implements PlanWindow {
   @Max(100_000_000_000)
   limit: number;
 
+  // null: never resets (a one-time credit).
+  @ValidateIf((_, value) => value !== null)
   @IsInt()
   @Min(1)
   @Max(24 * 366)
-  duration_hours: number;
+  duration_hours: number | null;
+
+  // Counts only the plan's premium models.
+  @IsOptional()
+  @IsBoolean()
+  premium_only?: boolean;
+}
+
+export class PlanPricingDto implements PlanPricing {
+  @IsNumber({ maxDecimalPlaces: 2 })
+  @Min(1)
+  @Max(1_000_000)
+  monthlyPriceInr: number;
+
+  @IsNumber({ maxDecimalPlaces: 2 })
+  @Min(0)
+  @Max(90)
+  marginPercent: number;
+
+  @IsNumber({ maxDecimalPlaces: 4 })
+  @Min(1)
+  @Max(1000)
+  inrPerUsd: number;
+
+  @IsNumber({ maxDecimalPlaces: 2 })
+  @Min(1)
+  @Max(34)
+  sessionsPerWeek: number;
+
+  @IsNumber({ maxDecimalPlaces: 2 })
+  @Min(0)
+  @Max(100)
+  premiumSharePercent: number;
 }
 
 export class UpdatePlanDto implements UpdatePlanRequest {
@@ -50,4 +88,9 @@ export class UpdatePlanDto implements UpdatePlanRequest {
   @ValidateNested({ each: true })
   @Type(() => PlanWindowDto)
   windows: PlanWindowDto[];
+
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => PlanPricingDto)
+  pricing?: PlanPricingDto | null;
 }

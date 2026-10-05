@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
 import type { AdminPlan } from "@nakka/types/admin";
-import type { PlanModel, PlanWindow } from "@nakka/types/plans";
+import type { PlanModel, PlanPricing, PlanWindow } from "@nakka/types/plans";
 import { PlansRepository } from "../plans/plans.repository.js";
 import { AuditLogRepository } from "./audit-log.repository.js";
 
@@ -29,12 +29,13 @@ export class AdminPlansService {
     planId: string,
     name: string,
     windows: PlanWindow[],
+    pricing: PlanPricing | null,
     adminId: string,
   ): Promise<AdminPlan> {
     await this.assertExists(planId);
     assertUnique(windows.map((window) => window.id), "Each window needs a different id.");
-    await this.plans.update(planId, name, windows);
-    await this.audit.record(adminId, "plan.update", planId, { name, windows });
+    await this.plans.update(planId, name, windows, pricing);
+    await this.audit.record(adminId, "plan.update", planId, { name, windows, pricing });
     return this.find(planId);
   }
 

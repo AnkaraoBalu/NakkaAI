@@ -7,7 +7,9 @@ export const styles = {
     "hidden md:grid grid-cols-[1.4fr_1fr_1.4fr_auto] gap-space-sm px-1 font-label-sm text-label-sm uppercase tracking-wider text-outline font-semibold",
   row: "grid grid-cols-1 md:grid-cols-[1.4fr_1fr_1.4fr_auto] gap-space-sm items-center p-space-sm md:p-space-sm rounded-xl bg-surface-container-low/50 border border-outline-variant/30",
   prices:
-    "md:col-span-3 grid grid-cols-2 md:grid-cols-[repeat(4,1fr)_auto] gap-space-sm items-end",
+    "md:col-span-3 grid grid-cols-2 md:grid-cols-[repeat(4,1fr)_auto_auto] gap-space-sm items-end",
+  premium:
+    "col-span-2 md:col-span-1 pb-2 inline-flex items-center gap-2 font-label-md text-label-md text-on-surface whitespace-nowrap cursor-pointer [&>input]:w-4 [&>input]:h-4 [&>input]:accent-primary",
   priceField: "flex flex-col gap-1",
   priceLabel: "font-label-sm text-label-sm text-outline",
   money: "relative block",

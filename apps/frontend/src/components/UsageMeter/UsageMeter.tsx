@@ -10,10 +10,13 @@ interface UsageMeterProps {
   detail?: ReactNode;
 }
 
-// One allowance window: how much is used and when it resets.
+// One allowance window: how much is used and when it resets. A window without
+// a reset time is a one-time credit: once used up, only upgrading helps.
 export default function UsageMeter({ usage, detail }: UsageMeterProps) {
   const percent = Math.min(Math.max(usage.used, 0), 100);
-  const resetsIn = formatDuration(Math.max(new Date(usage.resetsAt).getTime() - Date.now(), 0));
+  const resetsIn = usage.resetsAt
+    ? formatDuration(Math.max(new Date(usage.resetsAt).getTime() - Date.now(), 0))
+    : null;
   const usedUp = percent >= 100;
 
   return (
@@ -35,10 +38,18 @@ export default function UsageMeter({ usage, detail }: UsageMeterProps) {
       </div>
       <div className={styles.bottom}>
         <span className={styles.left(usedUp)}>
-          {usedUp ? `Used up · back in ${resetsIn}` : detail ?? `${100 - percent}% left`}
+          {usedUp
+            ? resetsIn
+              ? `Used up · back in ${resetsIn}`
+              : "Used up · upgrade to continue"
+            : (detail ?? `${100 - percent}% left`)}
         </span>
         <span>
-          {percent === 0 && !usedUp ? "Starts with your next request" : `Resets in ${resetsIn}`}
+          {!resetsIn
+            ? "One-time · doesn't renew"
+            : percent === 0 && !usedUp
+              ? "Starts with your next request"
+              : `Resets in ${resetsIn}`}
         </span>
       </div>
     </div>

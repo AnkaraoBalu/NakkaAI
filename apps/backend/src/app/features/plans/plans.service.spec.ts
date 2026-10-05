@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { PlansService, percentUsed } from "./plans.service.js";
+import { PlansService, percentUsed, windowsFor } from "./plans.service.js";
 import type { PlansRepository } from "./plans.repository.js";
 
 const HOUR = 60 * 60 * 1000;
@@ -39,7 +39,7 @@ describe("allowance windows", () => {
     const before = Date.now();
     const [, week] = await service.windowsFor("u1", plan);
     expect(week!.used).toBe(0);
-    const resets = Date.parse(week!.resetsAt);
+    const resets = Date.parse(week!.resetsAt!);
     expect(resets).toBeGreaterThanOrEqual(before + 168 * HOUR);
     expect(resets).toBeLessThanOrEqual(Date.now() + 168 * HOUR);
   });
@@ -55,5 +55,29 @@ describe("allowance windows", () => {
     expect(percentUsed(3_000_000, 3_000_000)).toBe(100);
     expect(percentUsed(3_400_000, 3_000_000)).toBe(100);
     expect(percentUsed(0, 3_000_000)).toBe(0);
+  });
+});
+
+describe("Free credit and premium cap", () => {
+  const free = {
+    id: "free",
+    name: "Free",
+    windows: [{ id: "credit", label: "Free credit", limit: 250_000, duration_hours: null }],
+  };
+
+  it("shows a one-time credit without a reset time", async () => {
+    const { service } = setup(new Map([["credit", { used: 125_000, resetsAt: new Date(8.64e15) }]]));
+    const [credit] = await service.windowsFor("u1", free);
+    expect(credit).toEqual({ id: "credit", label: "Free credit", used: 50, limit: 100 });
+    expect(credit).not.toHaveProperty("resetsAt");
+  });
+
+  it("counts premium models against the premium cap, others only against the rest", () => {
+    const windows = [
+      { id: "5h", label: "5-hour", limit: 1, duration_hours: 5 },
+      { id: "week-premium", label: "Premium weekly", limit: 1, duration_hours: 168, premium_only: true },
+    ];
+    expect(windowsFor(windows, { premium: true }).map((w) => w.id)).toEqual(["5h", "week-premium"]);
+    expect(windowsFor(windows, { premium: false }).map((w) => w.id)).toEqual(["5h"]);
   });
 });

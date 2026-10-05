@@ -11,13 +11,14 @@ export interface ExtensionAccount {
 }
 
 // Allowances measure cost, like Claude Code's, so users see a percentage:
-// `used` is 0–100 and `limit` is always 100.
+// `used` is 0–100 and `limit` is always 100. A window without `resetsAt`
+// never resets (the Free plan's one-time credit).
 export interface UsageWindow {
   id: string;
   label: string;
   used: number;
   limit: number;
-  resetsAt: string;
+  resetsAt?: string;
 }
 
 // GET /v1/models
