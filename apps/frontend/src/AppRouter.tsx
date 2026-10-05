@@ -1,13 +1,25 @@
-import { BrowserRouter, Navigate, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Navigate, Outlet, Routes, Route } from "react-router-dom";
 import SiteLayout from "./components/SiteLayout";
-import DashboardLayout from "./components/DashboardLayout";
+import UserLayout from "./components/UserLayout";
+import AdminLayout from "./components/AdminLayout";
 import Home from "./pages/home/Home";
 import NotFound from "./components/NotFound";
 import RequireAuth from "./components/RequireAuth";
+import RequireAdmin from "./components/RequireAdmin";
 import PublicOnly from "./components/PublicOnly";
 import Dashboard from "./pages/dashboard";
-import DashboardSection from "./pages/dashboard/DashboardSection";
+import Usage from "./pages/dashboard/Usage";
 import Settings from "./pages/dashboard/Settings";
+import AdminLogin from "./pages/admin/Login";
+import AdminSignup from "./pages/admin/Signup";
+import AdminAdmins from "./pages/admin/Admins";
+import AdminOverview from "./pages/admin/Overview";
+import AdminProviderKeys from "./pages/admin/ProviderKeys";
+import AdminPlans from "./pages/admin/Plans";
+import AdminUsers from "./pages/admin/Users";
+import AdminUserDetail from "./pages/admin/UserDetail";
+import AdminUsage from "./pages/admin/Usage";
+import AdminAuthProvider from "./context/AdminAuthProvider";
 import SsoCallback from "./pages/sso/SsoCallback";
 import ExtensionAuth from "./pages/extension-auth";
 import AuthModalProvider from "./context/AuthModalProvider";
@@ -42,12 +54,36 @@ export default function AppRouter() {
 
           {/* Signed-in app: its own sidebar and top bar. */}
           <Route element={<RequireAuth />}>
-            <Route path="dashboard" element={<DashboardLayout />}>
+            <Route path="dashboard" element={<UserLayout />}>
               <Route index element={<Dashboard />} />
-              <Route path="sessions" element={<DashboardSection />} />
-              <Route path="projects" element={<DashboardSection />} />
-              <Route path="usage" element={<DashboardSection />} />
+              <Route path="usage" element={<Usage />} />
               <Route path="settings" element={<Settings />} />
+              <Route path="*" element={<Navigate to="/dashboard" replace />} />
+            </Route>
+          </Route>
+
+          {/* Admin dashboard: its own sign-in, separate from users'. */}
+          <Route
+            path="admin"
+            element={
+              <AdminAuthProvider>
+                <Outlet />
+              </AdminAuthProvider>
+            }
+          >
+            <Route path="login" element={<AdminLogin />} />
+            <Route path="signup" element={<AdminSignup />} />
+            <Route element={<RequireAdmin />}>
+              <Route element={<AdminLayout />}>
+                <Route index element={<AdminOverview />} />
+                <Route path="keys" element={<AdminProviderKeys />} />
+                <Route path="plans" element={<AdminPlans />} />
+                <Route path="users" element={<AdminUsers />} />
+                <Route path="users/:userId" element={<AdminUserDetail />} />
+                <Route path="usage" element={<AdminUsage />} />
+                <Route path="admins" element={<AdminAdmins />} />
+                <Route path="*" element={<Navigate to="/admin" replace />} />
+              </Route>
             </Route>
           </Route>
 

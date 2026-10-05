@@ -1,10 +1,14 @@
+import type { ReactNode } from "react";
 import { Link, NavLink } from "react-router-dom";
-import { VSCODE_INSTALL_URL } from "../../../constants/extension";
-import UserMenu from "../UserMenu";
-import { navItems } from "../navItems";
+import type { NavItem } from "../DashboardLayout";
 import { styles } from "./Sidebar.style";
 
 interface SidebarProps {
+  navItems: NavItem[];
+  homeTo: string;
+  brandTag?: string;
+  action?: ReactNode;
+  footer: ReactNode;
   // Desktop: icon-only rail. Mobile always shows the full drawer.
   collapsed: boolean;
   mobileOpen: boolean;
@@ -13,6 +17,11 @@ interface SidebarProps {
 }
 
 export default function Sidebar({
+  navItems,
+  homeTo,
+  brandTag,
+  action,
+  footer,
   collapsed,
   mobileOpen,
   onToggleCollapsed,
@@ -22,11 +31,12 @@ export default function Sidebar({
     <aside className={styles.root(collapsed, mobileOpen)} aria-label="Sidebar">
       <div className={styles.top(collapsed)}>
         <Link
-          to="/dashboard"
+          to={homeTo}
           className={`${styles.brand} ${collapsed ? "lg:hidden" : ""}`}
         >
           <img alt="" className={styles.logo} src="/logo3.png" />
           <span className={styles.brandName}>Nakka</span>
+          {brandTag && <span className={styles.brandTag}>{brandTag}</span>}
         </Link>
         <button
           type="button"
@@ -50,23 +60,15 @@ export default function Sidebar({
       </div>
 
       <div className={styles.body}>
-        <a
-          href={VSCODE_INSTALL_URL}
-          className={styles.primaryAction(collapsed)}
-          title="Open in VS Code"
-        >
-          <span className="material-symbols-outlined text-[18px]">
-            terminal
-          </span>
-          <span className={styles.label(collapsed)}>Open in VS Code</span>
-        </a>
+        {action}
 
-        <nav className={styles.nav} aria-label="Dashboard">
+        <nav className={styles.nav} aria-label="Main">
           {navItems.map((item) => (
             <NavLink
               key={item.to}
               to={item.to}
-              end
+              // Section roots (Overview) match exactly; others also own sub-pages.
+              end={item.to === homeTo}
               title={collapsed ? item.label : undefined}
               className={({ isActive }) => styles.navLink(isActive, collapsed)}
             >
@@ -79,18 +81,9 @@ export default function Sidebar({
             </NavLink>
           ))}
         </nav>
-
-        <div className="flex flex-col gap-space-xs">
-          <p className={styles.sectionTitle(collapsed)}>Recent</p>
-          <p className={styles.recentEmpty(collapsed)}>
-            No sessions yet. Start one from VS Code.
-          </p>
-        </div>
       </div>
 
-      <div className={styles.footer}>
-        <UserMenu collapsed={collapsed} />
-      </div>
+      <div className={styles.footer}>{footer}</div>
     </aside>
   );
 }

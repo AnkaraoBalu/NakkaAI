@@ -1,21 +1,16 @@
 import { Inject, Injectable, Logger } from "@nestjs/common";
 import type { Request, Response } from "express";
 import { hashToken } from "../auth/session.service.js";
-import {
-  proxyConfig,
-  type Provider,
-  type ProxyConfig,
-} from "./proxy.config.js";
+import type { Provider } from "../provider-keys/provider-keys.config.js";
+import { ProviderKeysService } from "../provider-keys/provider-keys.service.js";
+import { proxyConfig, type ProxyConfig } from "./proxy.config.js";
 import { ProxyRepository } from "./proxy.repository.js";
+import { estimateTokens, hasPrices, requestCostMicros } from "./request-cost.js";
 import { UsageMeter } from "./usage-meter.js";
 import { UsageRepository } from "./usage.repository.js";
 
 export type Endpoint = "messages" | "chat";
 type ProxyRequest = Request & { rawBody?: Buffer };
-
-// Every AI request counts as this many units against each allowance window.
-// Change here to bill by tokens or by model instead.
-const REQUEST_COST = 1;
 
 // Response headers worth passing back to the extension.
 const PASS_HEADERS = [
@@ -42,6 +37,7 @@ export class ProxyService {
   constructor(
     private readonly access: ProxyRepository,
     private readonly usage: UsageRepository,
+    private readonly providerKeys: ProviderKeysService,
     @Inject(proxyConfig.KEY) private readonly config: ProxyConfig,
   ) {}
 
@@ -90,7 +86,16 @@ export class ProxyService {
         `Send ${model.modelId} to ${anthropic ? "/v1/messages" : "/v1/chat/completions"}.`,
       );
     }
-    const key = this.config.keys[provider];
+    // Allowances are measured in cost, so a model without prices can't be used.
+    if (!hasPrices(model)) {
+      this.logger.warn(`No prices set for ${model.modelId} on the ${plan.id} plan`);
+      return sendError(
+        res,
+        503,
+        "This model isn't available right now. Try another one.",
+      );
+    }
+    const key = await this.providerKeys.get(provider);
     if (!key) {
       this.logger.warn(`No API key configured for ${provider}`);
       return sendError(
@@ -100,7 +105,9 @@ export class ProxyService {
       );
     }
 
-    // 3. Allowance left? The first used-up window (in plan order) answers 402.
+    // 3. Allowance left? Like Claude Code, a request may start while every
+    //    window is under 100%; its cost is added when it ends. The first
+    //    used-up window (in plan order) answers 402.
     const usedUp = plan.windows
       .map((window) => ({
         window,
@@ -122,12 +129,30 @@ export class ProxyService {
       );
     }
 
-    // 4. Forward the body as received. Only the model name changes, and only when
-    //    plan_models maps the name the user sees to a different upstream name.
+    // 4. Forward the body as received. Only two things may change: the model
+    //    name, when plan_models maps it to a different upstream name, and, for
+    //    streamed OpenAI-style requests, asking for token usage, which those
+    //    providers only report when asked and which the cost depends on.
+    const wantsUsage =
+      !anthropic &&
+      body.stream === true &&
+      (body as { stream_options?: { include_usage?: unknown } }).stream_options
+        ?.include_usage !== true;
     const outgoing =
-      model.upstreamModel === model.modelId
+      model.upstreamModel === model.modelId && !wantsUsage
         ? raw
-        : JSON.stringify({ ...body, model: model.upstreamModel });
+        : JSON.stringify({
+            ...body,
+            model: model.upstreamModel,
+            ...(wantsUsage
+              ? {
+                  stream_options: {
+                    ...(body as { stream_options?: object }).stream_options,
+                    include_usage: true,
+                  },
+                }
+              : {}),
+          });
     const headers: Record<string, string> = {
       "content-type": "application/json",
     };
@@ -150,7 +175,7 @@ export class ProxyService {
 
     let upstream: globalThis.Response;
     try {
-      upstream = await fetch(this.config.urls[provider], {
+      upstream = await fetch(this.providerKeys.url(provider), {
         method: "POST",
         headers,
         body: outgoing,
@@ -213,21 +238,34 @@ export class ProxyService {
           `${provider} stream broke: ${(error as Error).message}`,
         );
       }
-    } finally {
-      if (!res.writableEnded) res.end();
     }
 
-    // 6. Record usage after the stream ends (the counts arrive at the end).
-    if (upstream.ok) {
-      try {
-        await this.usage.record(
-          { userId, modelId: model.modelId, provider, ...meter.finish() },
-          plan.windows,
-          REQUEST_COST,
-        );
-      } catch (error) {
-        this.logger.error(`Couldn't record usage: ${(error as Error).message}`);
+    // 6. Record usage after the stream ends (the counts arrive at the end), and
+    //    only then end the response, so the extension's next request already
+    //    sees this one's cost. Failed requests cost nothing. If a provider
+    //    reported no usage at all, the request is charged as input by its size
+    //    rather than for free.
+    try {
+      if (!upstream.ok) return;
+      let tokens = meter.finish();
+      if (!tokens.inputTokens && !tokens.outputTokens && !tokens.cacheReadTokens && !tokens.cacheWriteTokens) {
+        this.logger.warn(`${provider} reported no usage for ${model.modelId}; estimating`);
+        tokens = estimateTokens(raw);
       }
+      await this.usage.record(
+        {
+          userId,
+          modelId: model.modelId,
+          provider,
+          ...tokens,
+          costMicros: requestCostMicros(tokens, model),
+        },
+        plan.windows,
+      );
+    } catch (error) {
+      this.logger.error(`Couldn't record usage: ${(error as Error).message}`);
+    } finally {
+      if (!res.writableEnded) res.end();
     }
   }
 }

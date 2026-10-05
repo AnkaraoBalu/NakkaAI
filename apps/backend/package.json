@@ -9,7 +9,8 @@
     "start": "node --env-file-if-exists=.env dist/main.js",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "db:migrate": "node --env-file-if-exists=.env database/migrate.mjs"
+    "db:migrate": "node --env-file-if-exists=.env database/migrate.mjs",
+    "db:create-admin": "node --env-file-if-exists=.env database/create-admin.mjs"
   },
   "devDependencies": {
     "@nakka/tsconfig": "workspace:*",

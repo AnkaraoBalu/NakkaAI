@@ -1,5 +1,5 @@
 export const styles = {
-  root: "flex flex-col gap-space-xl",
+  root: "flex flex-col gap-space-lg",
   greeting: "flex flex-col gap-space-xs",
   title:
     "font-headline-lg text-headline-lg-mobile sm:text-headline-lg text-on-surface tracking-tight",
@@ -17,10 +17,8 @@ export const styles = {
   stepText: "flex-1 font-body-sm text-body-sm text-on-surface-variant",
   stepAction:
     "self-start inline-flex items-center gap-1 font-label-md text-label-md font-semibold text-primary hover:underline underline-offset-4",
-  empty:
-    "flex flex-col items-center justify-center text-center gap-space-sm min-h-[220px] p-space-xl rounded-2xl bg-surface-container-lowest/60 border border-dashed border-outline-variant/60",
-  emptyIcon:
-    "w-12 h-12 rounded-full bg-surface-container-low text-outline flex items-center justify-center",
-  emptyTitle: "font-headline-sm text-headline-sm text-on-surface font-semibold",
-  emptyText: "font-body-md text-body-md text-on-surface-variant max-w-sm",
+  stats: "grid grid-cols-1 sm:grid-cols-3 gap-space-md",
+  error:
+    "p-3 rounded-xl bg-error-container/60 text-on-error-container font-body-md text-body-md",
+  loading: "flex items-center gap-2 text-outline font-body-md text-body-md",
 };

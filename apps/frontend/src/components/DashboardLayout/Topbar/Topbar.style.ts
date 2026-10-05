@@ -6,7 +6,4 @@ export const styles = {
   title:
     "truncate font-headline-sm text-headline-sm text-on-surface font-semibold",
   right: "flex items-center gap-space-sm",
-  plan: "hidden sm:inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-surface-container-low font-label-sm text-label-sm text-on-surface-variant",
-  install:
-    "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-inverse-surface text-inverse-on-surface font-label-md text-label-md hover:bg-on-surface transition-colors shadow-sm",
 };

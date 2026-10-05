@@ -1,6 +1,10 @@
 import { Link } from "react-router-dom";
 import { useAuth } from "../../api-hooks/auth";
+import { useUsage } from "../../api-hooks/usage";
+import StatTile from "../../components/StatTile";
 import { VSCODE_INSTALL_URL } from "../../constants/extension";
+import { formatNumber } from "../../utils/format";
+import PlanCard from "./PlanCard";
 import { styles } from "./Dashboard.style";
 
 const steps = [
@@ -11,30 +15,63 @@ const steps = [
     action: { label: "Open in VS Code", href: VSCODE_INSTALL_URL },
   },
   {
-    icon: "key",
-    title: "Add your API key",
-    text: "Bring your own key for the model you want Nakka to use.",
-    action: { label: "Go to settings", to: "/dashboard/settings" },
+    icon: "login",
+    title: "Sign in from VS Code",
+    text: "Open the Nakka panel and sign in with this account. No API key needed.",
+    action: { label: "Open in VS Code", href: VSCODE_INSTALL_URL },
   },
   {
-    icon: "forum",
-    title: "Start a session",
-    text: "Open the Nakka panel in VS Code and ask about your codebase.",
-    action: { label: "View sessions", to: "/dashboard/sessions" },
+    icon: "monitoring",
+    title: "Keep an eye on usage",
+    text: "See how much of your allowance is left and when it resets.",
+    action: { label: "View usage", to: "/dashboard/usage" },
   },
 ];
 
 export default function Dashboard() {
   const { user } = useAuth();
+  const { data, error } = useUsage();
 
   return (
     <div className={styles.root}>
       <div className={styles.greeting}>
         <h2 className={styles.title}>Welcome back, {user?.firstName}</h2>
         <p className={styles.subtitle}>
-          Here's where your Nakka sessions and projects will live.
+          Your plan, your allowance, and how to get coding with Nakka.
         </p>
       </div>
+
+      {error && <p className={styles.error}>{error}</p>}
+      {!data && !error && (
+        <p className={styles.loading}>
+          <span className="material-symbols-outlined text-[18px] animate-spin">
+            progress_activity
+          </span>
+          Loading your plan…
+        </p>
+      )}
+      {data && (
+        <>
+          <PlanCard usage={data} />
+          <div className={styles.stats}>
+            <StatTile
+              icon="bolt"
+              label="Requests, last 30 days"
+              value={formatNumber(data.totals.requests)}
+            />
+            <StatTile
+              icon="input"
+              label="Tokens sent"
+              value={formatNumber(data.totals.inputTokens, { short: true })}
+            />
+            <StatTile
+              icon="output"
+              label="Tokens received"
+              value={formatNumber(data.totals.outputTokens, { short: true })}
+            />
+          </div>
+        </>
+      )}
 
       <section className={styles.section}>
         <h3 className={styles.sectionTitle}>Get started</h3>
@@ -68,19 +105,6 @@ export default function Dashboard() {
               )}
             </div>
           ))}
-        </div>
-      </section>
-
-      <section className={styles.section}>
-        <h3 className={styles.sectionTitle}>Recent sessions</h3>
-        <div className={styles.empty}>
-          <span className={styles.emptyIcon} aria-hidden="true">
-            <span className="material-symbols-outlined text-[24px]">forum</span>
-          </span>
-          <p className={styles.emptyTitle}>No sessions yet</p>
-          <p className={styles.emptyText}>
-            Sessions you start in VS Code will show up here.
-          </p>
         </div>
       </section>
     </div>

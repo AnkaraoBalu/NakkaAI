@@ -1,9 +1,29 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import Sidebar from "./Sidebar";
 import Topbar from "./Topbar";
-import { navItems } from "./navItems";
 import { styles } from "./DashboardLayout.style";
+
+export interface NavItem {
+  label: string;
+  to: string;
+  icon: string;
+  description: string;
+}
+
+export interface DashboardLayoutProps {
+  navItems: NavItem[];
+  // Where the logo links to.
+  homeTo: string;
+  // Small tag next to the logo, e.g. "Admin".
+  brandTag?: string;
+  // Button above the navigation (gets the desktop "collapsed" state).
+  sidebarAction?: (collapsed: boolean) => ReactNode;
+  // Account menu at the bottom of the sidebar.
+  sidebarFooter: (collapsed: boolean) => ReactNode;
+  // Right side of the top bar.
+  topbarActions?: ReactNode;
+}
 
 const COLLAPSED_KEY = "nakka.sidebarCollapsed";
 
@@ -15,14 +35,33 @@ function readCollapsed() {
   }
 }
 
-// App shell for signed-in pages: sidebar on the left, top bar above the page.
-export default function DashboardLayout() {
+// The current page's nav entry: exact match, else the deepest parent
+// (so /admin/users/123 is titled "Users").
+function currentItem(navItems: NavItem[], pathname: string) {
+  const path = pathname.replace(/\/$/, "");
+  return (
+    navItems.find((item) => item.to === path) ??
+    [...navItems]
+      .filter((item) => path.startsWith(`${item.to}/`))
+      .sort((a, b) => b.to.length - a.to.length)[0] ??
+    navItems[0]
+  );
+}
+
+// App shell for signed-in pages (user dashboard and admin): sidebar on the
+// left, top bar above the page.
+export default function DashboardLayout({
+  navItems,
+  homeTo,
+  brandTag,
+  sidebarAction,
+  sidebarFooter,
+  topbarActions,
+}: DashboardLayoutProps) {
   const { pathname } = useLocation();
   const [collapsed, setCollapsed] = useState(readCollapsed);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const current =
-    navItems.find((item) => item.to === pathname.replace(/\/$/, "")) ??
-    navItems[0];
+  const current = currentItem(navItems, pathname);
 
   // Close the mobile drawer whenever the page changes.
   useEffect(() => setMobileOpen(false), [pathname]);
@@ -50,6 +89,11 @@ export default function DashboardLayout() {
   return (
     <div className={styles.root}>
       <Sidebar
+        navItems={navItems}
+        homeTo={homeTo}
+        brandTag={brandTag}
+        action={sidebarAction?.(collapsed)}
+        footer={sidebarFooter(collapsed)}
         collapsed={collapsed}
         mobileOpen={mobileOpen}
         onToggleCollapsed={toggleCollapsed}
@@ -61,7 +105,9 @@ export default function DashboardLayout() {
         aria-hidden="true"
       />
       <div className={styles.main}>
-        <Topbar title={current.label} onOpenMenu={() => setMobileOpen(true)} />
+        <Topbar title={current.label} onOpenMenu={() => setMobileOpen(true)}>
+          {topbarActions}
+        </Topbar>
         <main className={styles.content}>
           <div className={styles.contentInner}>
             <Outlet />

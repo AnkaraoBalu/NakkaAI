@@ -1,10 +1,13 @@
 // Reads token counts out of a provider's response as it streams past, without
 // holding the stream back. Handles both streamed (SSE) and plain JSON replies.
 
+// The same meaning for every provider: inputTokens excludes cached input,
+// which is split into cache reads and cache writes.
 export interface TokenCounts {
   inputTokens: number;
   outputTokens: number;
   cacheReadTokens: number;
+  cacheWriteTokens: number;
 }
 
 type Json = Record<string, unknown>;
@@ -17,7 +20,10 @@ export class UsageMeter {
     inputTokens: 0,
     outputTokens: 0,
     cacheReadTokens: 0,
+    cacheWriteTokens: 0,
   };
+  // OpenAI-style prompt_tokens include cached ones; kept to split them out.
+  private promptTokens = 0;
   private buffer = "";
   private readonly decoder = new TextDecoder();
   private readonly chunks: string[] = [];
@@ -86,13 +92,19 @@ export class UsageMeter {
       if ("cache_read_input_tokens" in usage) {
         this.counts.cacheReadTokens = num(usage.cache_read_input_tokens);
       }
+      if ("cache_creation_input_tokens" in usage) {
+        this.counts.cacheWriteTokens = num(usage.cache_creation_input_tokens);
+      }
     } else {
-      if ("prompt_tokens" in usage)
-        this.counts.inputTokens = num(usage.prompt_tokens);
+      if ("prompt_tokens" in usage) this.promptTokens = num(usage.prompt_tokens);
       if ("completion_tokens" in usage)
         this.counts.outputTokens = num(usage.completion_tokens);
       const cached = obj(usage.prompt_tokens_details).cached_tokens;
       if (cached !== undefined) this.counts.cacheReadTokens = num(cached);
+      this.counts.inputTokens = Math.max(
+        this.promptTokens - this.counts.cacheReadTokens,
+        0,
+      );
     }
   }
 }

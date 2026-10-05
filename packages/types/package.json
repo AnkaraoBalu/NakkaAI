@@ -5,7 +5,10 @@
   "type": "module",
   "exports": {
     "./users": "./users.ts",
-    "./extension": "./extension.ts"
+    "./extension": "./extension.ts",
+    "./plans": "./plans.ts",
+    "./usage": "./usage.ts",
+    "./admin": "./admin.ts"
   },
   "scripts": {
     "typecheck": "tsc"

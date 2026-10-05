@@ -12,4 +12,8 @@ export const TABLES = {
   SUBSCRIPTIONS: "subscriptions",
   USAGE_EVENTS: "usage_events",
   USAGE_WINDOWS: "usage_windows",
+  ADMIN_USERS: "admin_users",
+  ADMIN_TOKENS: "admin_tokens",
+  PROVIDER_KEYS: "provider_keys",
+  ADMIN_AUDIT_LOG: "admin_audit_log",
 } as const;

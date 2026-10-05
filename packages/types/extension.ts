@@ -10,6 +10,8 @@ export interface ExtensionAccount {
   manageUrl?: string;
 }
 
+// Allowances measure cost, like Claude Code's, so users see a percentage:
+// `used` is 0–100 and `limit` is always 100.
 export interface UsageWindow {
   id: string;
   label: string;

@@ -1,4 +1,4 @@
-import { cardStyles } from "../card.style";
+import { cardStyles } from "../../../../styles/card.style";
 
 export const styles = {
   ...cardStyles,

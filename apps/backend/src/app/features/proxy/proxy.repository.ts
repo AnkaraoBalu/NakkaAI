@@ -1,22 +1,29 @@
 import { Inject, Injectable } from "@nestjs/common";
 import type pg from "pg";
 import { DATABASE, TABLES } from "../../common/database/constants.js";
-import type { PlanWindow } from "../extension/plans.repository.js";
+import type { PlanModel } from "@nakka/types/plans";
+import {
+  activePlanSql,
+  DEFAULT_PLAN,
+  toPlanModel,
+  type PlanModelRow,
+  type PlanWindow,
+} from "../plans/plans.repository.js";
 
 export interface ProxyAccess {
   userId: string;
   tokenId: string;
   touch: boolean; // last_used_at is stale enough to refresh
   plan: { id: string; name: string; windows: PlanWindow[] };
-  model: { modelId: string; provider: string; upstreamModel: string } | null;
-  // Live counts per window (rows whose reset time has passed are left out).
+  model: PlanModel | null;
+  // What each live window has spent so far, in micro-dollars (windows whose
+  // reset time has passed are left out).
   usage: { windowId: string; used: number; resetsAt: Date }[];
 }
 
-const DEFAULT_PLAN = "free";
-
 // Everything an AI request needs to know, in one database round trip:
-// whose token, which plan, whether the model is on it, and current usage.
+// whose token, which plan, whether the model is on it (with its prices), and
+// how much of each allowance window is spent.
 @Injectable()
 export class ProxyRepository {
   constructor(@Inject(DATABASE) private readonly db: pg.Pool) {}
@@ -32,11 +39,7 @@ export class ProxyRepository {
       plan_id: string | null;
       plan_name: string | null;
       windows: PlanWindow[] | null;
-      model: {
-        model_id: string;
-        provider: string;
-        upstream_model: string;
-      } | null;
+      model: PlanModelRow | null;
       usage: { window_id: string; used: number; resets_at: string }[];
     }>(
       `WITH token AS (
@@ -47,10 +50,7 @@ export class ProxyRepository {
        ),
        plan AS (
          SELECT p.* FROM ${TABLES.PLANS} p, token
-         WHERE p.id = COALESCE(
-           (SELECT plan_id FROM ${TABLES.SUBSCRIPTIONS} s
-            WHERE s.user_id = token.user_id AND s.status IN ('active', 'past_due')),
-           $3)
+         WHERE p.id = ${activePlanSql("token.user_id")}
        )
        SELECT token.user_id, token.id AS token_id, token.touch,
               plan.id AS plan_id, plan.name AS plan_name, plan.windows,
@@ -59,7 +59,7 @@ export class ProxyRepository {
               (SELECT COALESCE(json_agg(w), '[]'::json) FROM ${TABLES.USAGE_WINDOWS} w
                WHERE w.user_id = token.user_id AND w.resets_at > now()) AS usage
        FROM token LEFT JOIN plan ON true`,
-      [tokenHash, modelId, DEFAULT_PLAN],
+      [tokenHash, modelId],
     );
     const row = rows[0];
     if (!row) return null;
@@ -72,14 +72,10 @@ export class ProxyRepository {
         name: row.plan_name ?? "Free",
         windows: row.windows ?? [],
       },
-      model: row.model && {
-        modelId: row.model.model_id,
-        provider: row.model.provider,
-        upstreamModel: row.model.upstream_model,
-      },
+      model: row.model && toPlanModel(row.model),
       usage: row.usage.map((w) => ({
         windowId: w.window_id,
-        used: w.used,
+        used: Number(w.used),
         resetsAt: new Date(w.resets_at),
       })),
     };

@@ -7,7 +7,7 @@ describe("UsageMeter", () => {
   it("reads Anthropic stream counts from message_start and message_delta", () => {
     const meter = new UsageMeter("anthropic", true);
     const stream =
-      'event: message_start\ndata: {"type":"message_start","message":{"usage":{"input_tokens":11,"cache_read_input_tokens":3,"output_tokens":1}}}\n\n' +
+      'event: message_start\ndata: {"type":"message_start","message":{"usage":{"input_tokens":11,"cache_read_input_tokens":3,"cache_creation_input_tokens":5,"output_tokens":1}}}\n\n' +
       'event: content_block_delta\ndata: {"type":"content_block_delta","delta":{"text":"hi"}}\n\n' +
       'event: message_delta\ndata: {"type":"message_delta","usage":{"output_tokens":7}}\n\n';
     // Split mid-line, the way network chunks arrive.
@@ -18,10 +18,11 @@ describe("UsageMeter", () => {
       inputTokens: 11,
       outputTokens: 7,
       cacheReadTokens: 3,
+      cacheWriteTokens: 5,
     });
   });
 
-  it("reads OpenAI-compatible usage from the final chunk", () => {
+  it("reads OpenAI-compatible usage from the final chunk, splitting out cached input", () => {
     const meter = new UsageMeter("openai", true);
     meter.push(bytes('data: {"choices":[{"delta":{"content":"a"}}]}\n\n'));
     meter.push(
@@ -30,9 +31,10 @@ describe("UsageMeter", () => {
       ),
     );
     expect(meter.finish()).toEqual({
-      inputTokens: 20,
+      inputTokens: 16,
       outputTokens: 9,
       cacheReadTokens: 4,
+      cacheWriteTokens: 0,
     });
   });
 
@@ -44,6 +46,7 @@ describe("UsageMeter", () => {
       inputTokens: 5,
       outputTokens: 2,
       cacheReadTokens: 0,
+      cacheWriteTokens: 0,
     });
 
     const openai = new UsageMeter("openai", false);
@@ -52,6 +55,7 @@ describe("UsageMeter", () => {
       inputTokens: 8,
       outputTokens: 3,
       cacheReadTokens: 0,
+      cacheWriteTokens: 0,
     });
   });
 
@@ -62,6 +66,7 @@ describe("UsageMeter", () => {
       inputTokens: 0,
       outputTokens: 0,
       cacheReadTokens: 0,
+      cacheWriteTokens: 0,
     });
   });
 });
