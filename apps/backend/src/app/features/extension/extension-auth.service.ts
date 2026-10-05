@@ -20,7 +20,11 @@ export class ExtensionAuthService {
 
   // Only ever hand a token to the extension itself.
   private assertRedirect(redirect: string) {
-    if (!redirect.startsWith(this.config.extensionRedirectPrefix)) {
+    if (
+      !redirect
+        .toLowerCase()
+        .startsWith(this.config.extensionRedirectPrefix.toLowerCase())
+    ) {
       throw new BadRequestException(
         "This sign-in link isn't from the Nakka extension.",
       );
