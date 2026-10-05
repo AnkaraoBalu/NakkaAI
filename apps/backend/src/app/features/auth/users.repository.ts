@@ -1,4 +1,4 @@
-import { Inject, Injectable } from "@nestjs/common";
+import { ConflictException, Inject, Injectable } from "@nestjs/common";
 import type pg from "pg";
 import type { SignedInWith, User } from "@nakka/types/users";
 import { DATABASE, TABLES } from "../../common/database/constants.js";
@@ -10,6 +10,7 @@ interface UserRow {
   email: string;
   username: string;
   password_hash: string | null;
+  clerk_user_id: string | null;
   is_verified: boolean;
   is_logged_in: boolean;
   signed_in_with: SignedInWith;
@@ -20,6 +21,7 @@ interface UserRow {
 export interface UserWithPassword extends User {
   // Null for people who only sign in with Google/GitHub.
   passwordHash: string | null;
+  clerkUserId: string | null;
 }
 
 export interface NewUser {
@@ -30,10 +32,11 @@ export interface NewUser {
   passwordHash: string | null;
   isVerified: boolean;
   signedInWith?: SignedInWith;
+  clerkUserId?: string;
 }
 
 const COLUMNS =
-  "id, first_name, last_name, email, username, password_hash, is_verified, is_logged_in, signed_in_with, workspace, created_at";
+  "id, first_name, last_name, email, username, password_hash, clerk_user_id, is_verified, is_logged_in, signed_in_with, workspace, created_at";
 
 function toUser(row: UserRow): UserWithPassword {
   return {
@@ -43,6 +46,7 @@ function toUser(row: UserRow): UserWithPassword {
     email: row.email,
     username: row.username,
     passwordHash: row.password_hash,
+    clerkUserId: row.clerk_user_id,
     isVerified: row.is_verified,
     isLoggedIn: row.is_logged_in,
     signedInWith: row.signed_in_with,
@@ -54,6 +58,23 @@ function toUser(row: UserRow): UserWithPassword {
 @Injectable()
 export class UsersRepository {
   constructor(@Inject(DATABASE) private readonly db: pg.Pool) {}
+
+  async findByClerkId(clerkUserId: string): Promise<UserWithPassword | null> {
+    const { rows } = await this.db.query<UserRow>(
+      `SELECT ${COLUMNS} FROM ${TABLES.USERS} WHERE clerk_user_id = $1`,
+      [clerkUserId],
+    );
+    return rows[0] ? toUser(rows[0]) : null;
+  }
+
+  async linkClerk(userId: string, clerkUserId: string): Promise<void> {
+    const { rowCount } = await this.db.query(
+      `UPDATE ${TABLES.USERS} SET clerk_user_id = $2
+       WHERE id = $1 AND (clerk_user_id IS NULL OR clerk_user_id = $2)`,
+      [userId, clerkUserId],
+    );
+    if (!rowCount) throw new ConflictException("This account is linked to another Clerk user. Please use your original sign-in method.");
+  }
 
   async findById(id: string): Promise<UserWithPassword | null> {
     const { rows } = await this.db.query<UserRow>(
@@ -110,8 +131,8 @@ export class UsersRepository {
 
   async create(user: NewUser): Promise<UserWithPassword> {
     const { rows } = await this.db.query<UserRow>(
-      `INSERT INTO ${TABLES.USERS} (first_name, last_name, email, username, password_hash, is_verified, signed_in_with)
-       VALUES ($1, $2, $3, $4, $5, $6, $7)
+      `INSERT INTO ${TABLES.USERS} (first_name, last_name, email, username, password_hash, is_verified, signed_in_with, clerk_user_id)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
        RETURNING ${COLUMNS}`,
       [
         user.firstName,
@@ -121,6 +142,7 @@ export class UsersRepository {
         user.passwordHash,
         user.isVerified,
         user.signedInWith ?? "Nakka",
+        user.clerkUserId ?? null,
       ],
     );
     return toUser(rows[0]);

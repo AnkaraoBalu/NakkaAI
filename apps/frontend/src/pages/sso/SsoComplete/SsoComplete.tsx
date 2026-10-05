@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useAuth as useClerkAuth, useClerk } from "@clerk/react";
-import { useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { accountApi } from "../../../api/account";
 import { consumeReturnTo, useAuth } from "../../../api-hooks/auth";
 import SsoStatus from "../SsoStatus";
@@ -11,6 +11,7 @@ import SsoStatus from "../SsoStatus";
 export default function SsoComplete() {
   const { isLoaded, isSignedIn, getToken } = useClerkAuth();
   const clerk = useClerk();
+  const navigate = useNavigate();
   const { loginWithClerk } = useAuth();
   const [params] = useSearchParams();
   const connecting = params.get("mode") === "connect";
@@ -28,13 +29,16 @@ export default function SsoComplete() {
           throw new Error("Your sign-in didn't finish. Please try again.");
         if (connecting) {
           await accountApi.connect(token);
-          await clerk.signOut({
-            redirectUrl: `/dashboard/settings?connected=${provider}`,
-          });
         } else {
           await loginWithClerk(token);
-          await clerk.signOut({ redirectUrl: consumeReturnTo() });
         }
+        const destination = connecting
+          ? `/dashboard/settings?connected=${encodeURIComponent(provider)}`
+          : consumeReturnTo();
+        // A cleanup failure must not turn a successful Nakka login into an error.
+        await clerk.signOut({ redirectUrl: destination }).catch(() => {
+          navigate(destination, { replace: true });
+        });
       } catch (caught) {
         // End the Clerk session (without navigating) so the next attempt starts fresh.
         await clerk.session?.end().catch(() => undefined);
@@ -53,6 +57,7 @@ export default function SsoComplete() {
     clerk,
     connecting,
     provider,
+    navigate,
   ]);
 
   return (

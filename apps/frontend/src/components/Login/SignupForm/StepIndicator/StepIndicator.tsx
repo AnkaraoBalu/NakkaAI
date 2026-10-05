@@ -1,7 +1,7 @@
 import { Fragment } from "react";
 import { styles } from "./StepIndicator.style";
 
-const STEPS = ["Details", "Verify email", "Password"];
+const STEPS = ["Details", "Password", "Verify email"];
 
 export default function StepIndicator({ current }: { current: number }) {
   return (

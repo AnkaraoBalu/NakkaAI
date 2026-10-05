@@ -15,6 +15,8 @@ export { ApiError } from "./http";
 export type OAuthProvider = "google" | "github";
 
 export const authApi = {
+  checkSignupDetails: (details: SignupDetails) =>
+    request<void>("/auth/signup/check", { method: "POST", body: JSON.stringify(details) }),
   // Sign-up step 1: email a 6-digit code for these details.
   sendSignupOtp: (details: SignupDetails) =>
     request<SendSignupOtpResponse>("/auth/signup/otp", {

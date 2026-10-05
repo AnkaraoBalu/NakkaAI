@@ -25,9 +25,9 @@ export function validateDetails(
 export function validatePassword(password: string, confirmPassword: string) {
   return {
     password:
-      password.length >= 8 && /[a-zA-Z]/.test(password) && /\d/.test(password)
+      password.length >= 8
         ? ""
-        : "Use at least 8 characters, with a letter and a number.",
+        : "Use at least 8 characters. Your password must also meet the sign-up requirements.",
     confirmPassword: !confirmPassword
       ? "Re-enter your password."
       : confirmPassword === password

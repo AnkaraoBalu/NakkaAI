@@ -1,4 +1,7 @@
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
+import { SignIn } from "@clerk/react";
+import { CLERK_PUBLISHABLE_KEY } from "../../../context/ClerkSetup";
+import { rememberReturn } from "../../../api-hooks/auth/useOAuth";
 import type { OAuthProvider } from "../../../api/auth";
 import { useAuth, useOAuth } from "../../../api-hooks/auth";
 import TextField from "../../TextField";
@@ -15,6 +18,25 @@ interface LoginFormProps {
 type Field = "identifier" | "password";
 
 export default function LoginForm({ onSwitch, onDone }: LoginFormProps) {
+  const [legacy, setLegacy] = useState(!CLERK_PUBLISHABLE_KEY);
+  useEffect(() => { if (!legacy) rememberReturn(); }, [legacy]);
+  if (legacy) return (
+    <>
+      <LegacyLoginForm onSwitch={onSwitch} onDone={onDone} />
+      {CLERK_PUBLISHABLE_KEY && <button type="button" className={styles.switchButton} onClick={() => setLegacy(false)}>Back to standard sign-in</button>}
+    </>
+  );
+  return (
+    <div className={styles.form}>
+      <SignIn routing="hash" forceRedirectUrl="/sso-callback/complete"
+        appearance={{ elements: { rootBox: { width: "100%" }, cardBox: { width: "100%", boxShadow: "none" }, header: { display: "none" }, footerAction: { display: "none" } } }} />
+      <p className={styles.switchText}>Already had a Nakka password account? <button type="button" className={styles.switchButton} onClick={() => setLegacy(true)}>Use existing account</button></p>
+      <p className={styles.switchText}>Don't have an account? <button type="button" className={styles.switchButton} onClick={onSwitch}>Sign up</button></p>
+    </div>
+  );
+}
+
+function LegacyLoginForm({ onSwitch, onDone }: LoginFormProps) {
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [touched, setTouched] = useState<Partial<Record<Field, boolean>>>({});

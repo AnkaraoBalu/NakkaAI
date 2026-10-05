@@ -36,7 +36,7 @@ export default function VerifyStep({
   }, [waitSeconds]);
 
   function verify(value = code) {
-    if (value.length !== 6 || verifying.busy) return;
+    if (value.length !== 6 || verifying.busy || resending.busy) return;
     // On failure the boxes turn red; editing any digit clears the error.
     void verifying.run(() => onVerify(value));
   }
@@ -71,6 +71,7 @@ export default function VerifyStep({
           type="button"
           className={styles.changeButton}
           onClick={onChangeEmail}
+          disabled={verifying.busy || resending.busy}
         >
           Change
         </button>
@@ -84,7 +85,7 @@ export default function VerifyStep({
             if (verifying.error) verifying.setError("");
           }}
           onComplete={verify}
-          disabled={verifying.busy}
+          disabled={verifying.busy || resending.busy}
           invalid={Boolean(verifying.error)}
           autoFocus
         />
@@ -106,7 +107,7 @@ export default function VerifyStep({
       <button
         className={styles.submit}
         type="submit"
-        disabled={verifying.busy || code.length !== 6}
+        disabled={verifying.busy || resending.busy || code.length !== 6}
       >
         {verifying.busy && (
           <span className={styles.spinner} aria-hidden="true">
@@ -123,7 +124,7 @@ export default function VerifyStep({
             type="button"
             className={styles.resendButton}
             onClick={resend}
-            disabled={waitSeconds > 0 || resending.busy}
+            disabled={waitSeconds > 0 || verifying.busy || resending.busy}
           >
             {resending.busy
               ? "Sending..."
@@ -133,7 +134,7 @@ export default function VerifyStep({
           </button>
         </p>
         <p className={styles.expiry}>
-          The code expires in 10 minutes. Check your spam folder too.
+          Use the latest code from your email. Check your spam folder too.
         </p>
       </div>
     </form>

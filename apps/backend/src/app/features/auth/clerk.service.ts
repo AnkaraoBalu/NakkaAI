@@ -46,7 +46,7 @@ export class ClerkService {
   async profile(token: string): Promise<ClerkProfile> {
     if (!this.client || !this.config.clerkSecretKey) {
       throw new ServiceUnavailableException(
-        "Google and GitHub sign-in aren't set up on the server yet.",
+        "Clerk authentication isn't set up on the server yet.",
       );
     }
 
@@ -90,7 +90,11 @@ export class ClerkService {
       emailVerified: primary?.verification?.status === "verified",
       firstName: user.firstName,
       lastName: user.lastName,
-      username: user.username,
+      username: user.username ?? (
+        typeof user.unsafeMetadata.nakkaUsername === "string" &&
+        /^[a-zA-Z0-9_.-]{3,20}$/.test(user.unsafeMetadata.nakkaUsername)
+          ? user.unsafeMetadata.nakkaUsername : null
+      ),
       accounts,
     };
   }

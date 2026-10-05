@@ -25,6 +25,9 @@ export class MailService {
           host: config.host,
           port: config.port,
           secure: config.port === 465,
+          connectionTimeout: 10_000,
+          greetingTimeout: 10_000,
+          socketTimeout: 20_000,
           auth: config.user
             ? { user: config.user, pass: config.pass }
             : undefined,

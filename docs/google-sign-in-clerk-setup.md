@@ -1,5 +1,9 @@
 # Google sign-in with Clerk: setup playbook
 
+> This playbook describes the Open Book 24/7 implementation. For this repository's
+> current email registration, OTP, sign-in, and deployment configuration, see
+> [Nakka registration with Clerk](./nakka-clerk-registration.md).
+
 How "Continue with Google" was added to Open Book 24/7, written as a repeatable checklist so the same setup can be done on another website. It covers the code, the database change, Clerk (development and production), DNS, Google Cloud, legal pages, environment variables, deployment and testing.
 
 Placeholders used throughout:

@@ -14,7 +14,7 @@ export type OAuthMode = "login" | "connect";
 const RETURN_KEY = "nakka.returnTo";
 
 // Signing in from the VS Code sign-in page returns there instead of the dashboard.
-function rememberReturn() {
+export function rememberReturn() {
   try {
     if (window.location.pathname === "/auth") {
       sessionStorage.setItem(

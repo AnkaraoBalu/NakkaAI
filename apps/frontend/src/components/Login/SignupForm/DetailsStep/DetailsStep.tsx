@@ -105,10 +105,10 @@ export default function DetailsStep({
               progress_activity
             </span>
           )}
-          {busy && !provider ? "Sending code..." : "Send verification code"}
+          {busy && !provider ? "Continuing..." : "Continue"}
         </button>
         <p className={styles.hint}>
-          We'll email you a 6-digit code to confirm it's you.
+          Next, choose a password and verify your email.
         </p>
       </div>
 

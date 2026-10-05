@@ -43,16 +43,16 @@ export class AuthService {
     private readonly identities: IdentitiesRepository,
   ) {}
 
-  // Google/GitHub sign-in: trade a Clerk session token for a Nakka session.
+  // Email/password and Google/GitHub: trade a Clerk session token for a Nakka session.
   //  1. The Google/GitHub account is already connected to a user: sign them in.
   //  2. A user has the same verified email: connect the account to them.
   //  3. Otherwise create a new, verified user.
   async loginWithClerk(token: string): Promise<AuthResponse> {
     const profile = await this.clerk.profile(token);
-    if (!profile.accounts.length) {
-      throw new BadRequestException(
-        "We couldn't read your Google or GitHub account. Please try again.",
-      );
+    const linked = await this.users.findByClerkId(profile.clerkUserId);
+    if (linked) {
+      await this.identities.connect(linked.id, profile.clerkUserId, profile.accounts);
+      return this.startSession(linked);
     }
 
     const owners = await this.identities.owners(profile.accounts);
@@ -62,6 +62,7 @@ export class AuthService {
     if (ownerId) {
       const user = await this.users.findById(ownerId);
       if (user) {
+        await this.users.linkClerk(user.id, profile.clerkUserId);
         await this.identities.connect(
           user.id,
           profile.clerkUserId,
@@ -74,12 +75,13 @@ export class AuthService {
     // Matching on email is only safe when the provider confirmed the person owns it.
     if (!profile.email || !profile.emailVerified) {
       throw new BadRequestException(
-        "That account doesn't have a verified email address. Please sign up with email instead.",
+        "That account doesn't have a verified email address. Please verify your email and try again.",
       );
     }
 
     const existing = await this.users.findByEmail(profile.email);
     if (existing) {
+      await this.users.linkClerk(existing.id, profile.clerkUserId);
       await this.identities.connect(
         existing.id,
         profile.clerkUserId,
@@ -96,9 +98,11 @@ export class AuthService {
         email,
         username: await this.availableUsername(profile.username, email),
         passwordHash: null,
+        clerkUserId: profile.clerkUserId,
         isVerified: true,
         signedInWith:
-          profile.accounts[0].provider === "github" ? "GitHub" : "Google",
+          profile.accounts[0]?.provider === "github" ? "GitHub" :
+          profile.accounts[0]?.provider === "google" ? "Google" : "Nakka",
       });
       await this.identities.connect(
         user.id,
@@ -110,13 +114,17 @@ export class AuthService {
       // Same person finishing sign-in twice at once: use the account that won.
       if ((error as { code?: string }).code === UNIQUE_VIOLATION) {
         const winner = await this.users.findByEmail(email);
-        if (winner) return this.startSession(winner);
+        if (winner && winner.clerkUserId === profile.clerkUserId) return this.startSession(winner);
       }
       throw error;
     }
   }
 
   // Sign-up step 1: check the details are available, then email a code.
+  async checkSignupDetails(dto: SignupDetailsDto): Promise<void> {
+    await this.assertAvailable(dto.email.toLowerCase(), dto.username.toLowerCase());
+  }
+
   async sendSignupOtp(dto: SignupDetailsDto): Promise<SendSignupOtpResponse> {
     const email = dto.email.toLowerCase();
     await this.assertAvailable(email, dto.username.toLowerCase());
@@ -169,7 +177,9 @@ export class AuthService {
     );
     if (user && !user.passwordHash) {
       throw new UnauthorizedException(
-        `This account signs in with ${await this.providerLabel(user.id)}. Continue with it instead, or set a password in Settings after signing in.`,
+        user.clerkUserId
+          ? "Use the standard sign-in form with your email, or continue with Google or GitHub."
+          : `This account signs in with ${await this.providerLabel(user.id)}. Continue with it instead, or set a password in Settings after signing in.`,
       );
     }
     if (!user || !valid) throw new UnauthorizedException(INVALID_CREDENTIALS);
@@ -209,6 +219,10 @@ export class AuthService {
     username: string | null,
     email: string,
   ): Promise<string> {
+    if (username && /^[a-zA-Z0-9_.-]{3,20}$/.test(username)) {
+      const preferred = username.toLowerCase();
+      if (!(await this.users.usernameTaken(preferred))) return preferred;
+    }
     const base = (username ?? email.split("@")[0])
       .toLowerCase()
       .replace(/[^a-z0-9_.-]/g, "")
@@ -228,7 +242,9 @@ export class AuthService {
       const owner = await this.users.findByEmail(email);
       throw new ConflictException(
         owner && !owner.passwordHash
-          ? `An account with this email already exists and signs in with ${await this.providerLabel(owner.id)}. Continue with it instead.`
+          ? owner.clerkUserId
+            ? "An account with this email already exists. Use the standard sign-in form to continue."
+            : `An account with this email already exists and signs in with ${await this.providerLabel(owner.id)}. Continue with it instead.`
           : EMAIL_TAKEN,
       );
     }

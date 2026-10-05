@@ -25,6 +25,12 @@ function bearerToken(authorization: string | undefined): string {
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
+  @Post("signup/check")
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async checkSignupDetails(@Body() dto: SignupDetailsDto) {
+    await this.authService.checkSignupDetails(dto);
+  }
+
   @Post("signup/otp")
   @HttpCode(HttpStatus.OK)
   sendSignupOtp(@Body() dto: SignupDetailsDto) {

@@ -47,8 +47,8 @@ export default function PasswordStep({
   return (
     <form className={styles.form} onSubmit={submit} noValidate>
       <p className={styles.verified}>
-        <span className={styles.verifiedIcon}>verified</span>
-        <span className={styles.verifiedEmail}>{email} is verified</span>
+        <span className={styles.verifiedIcon}>lock</span>
+        <span className={styles.verifiedEmail}>Choose a password for {email}</span>
       </p>
 
       {error && (
@@ -127,7 +127,7 @@ export default function PasswordStep({
               progress_activity
             </span>
           )}
-          {busy ? "Creating account..." : "Create account"}
+        {busy ? "Sending code..." : "Send verification code"}
         </button>
         <p className={styles.terms}>
           By signing up, you agree to the Terms of Service and Privacy Policy.
