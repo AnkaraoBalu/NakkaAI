@@ -10,6 +10,7 @@ const urls = {
   openai: "https://openai.test/v1/chat/completions",
   google: "https://google.test/v1beta/openai/chat/completions",
   xai: "https://xai.test/v1/chat/completions",
+  fuelix: "https://api.fuelix.ai/v1/chat/completions",
 };
 
 function setup({
@@ -46,6 +47,23 @@ function setup({
 afterEach(() => vi.unstubAllGlobals());
 
 describe("provider keys", () => {
+  it("saves Fuelix separately and tests it using the OpenAI-compatible API", async () => {
+    const fetch = vi.fn(async () => new Response('{"data":[]}', { status: 200 }));
+    vi.stubGlobal("fetch", fetch);
+    const { service, repository } = setup();
+    const status = await service.set("fuelix", "fuelix-test-key-1234", "admin-1");
+    expect(status).toMatchObject({ provider: "fuelix", configured: true, last4: "1234" });
+    expect(await service.get("fuelix")).toBe("fuelix-test-key-1234");
+    expect(await service.get("openai")).toBeNull();
+    expect(service.url("fuelix")).toBe("https://api.fuelix.ai/v1/chat/completions");
+    expect(JSON.stringify(await service.list())).not.toContain("fuelix-test-key-1234");
+    expect(repository.save.mock.calls[0][1]).not.toContain("fuelix-test-key-1234");
+    await service.test("fuelix");
+    expect(fetch).toHaveBeenCalledWith("https://api.fuelix.ai/v1/models", expect.objectContaining({
+      headers: { authorization: "Bearer fuelix-test-key-1234" },
+    }));
+  });
+
   it("prefers the saved key over .env, and falls back to .env", async () => {
     const { service } = setup({ saved: { openai: "sk-saved-1111" }, envKeys: { openai: "sk-env", xai: "xai-env" } });
     expect(await service.get("openai")).toBe("sk-saved-1111");

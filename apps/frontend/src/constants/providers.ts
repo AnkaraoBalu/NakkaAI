@@ -1,11 +1,11 @@
 import type { Provider } from "@nakka/types/plans";
 
 // The AI companies Nakka forwards requests to, in display order.
-export const PROVIDERS: Provider[] = ["anthropic", "openai", "google", "xai"];
+export const PROVIDERS: Provider[] = ["anthropic", "openai", "google", "xai", "fuelix"];
 
 export const PROVIDER_INFO: Record<
   Provider,
-  { name: string; color: string; keysUrl: string; keyHint: string }
+  { name: string; color: string; keysUrl: string; keyHint: string; description?: string }
 > = {
   anthropic: {
     name: "Anthropic",
@@ -24,6 +24,13 @@ export const PROVIDER_INFO: Record<
     color: "#4285f4",
     keysUrl: "https://aistudio.google.com/apikey",
     keyHint: "AIza…",
+  },
+  fuelix: {
+    name: "Fuelix",
+    color: "#6366f1",
+    keysUrl: "https://fuelix.ai",
+    keyHint: "Fuelix API key",
+    description: "OpenAI-compatible gateway for your Fuelix models.",
   },
   xai: {
     name: "xAI",

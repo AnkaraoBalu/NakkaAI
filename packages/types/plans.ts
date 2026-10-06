@@ -1,7 +1,7 @@
 // Plans, their models and their allowance windows. Shared by the proxy, the
 // user's Usage page and the admin Plans page.
 
-export type Provider = "anthropic" | "openai" | "google" | "xai";
+export type Provider = "anthropic" | "openai" | "google" | "xai" | "fuelix";
 
 // One allowance window, e.g. { id: "5h", label: "5-hour", limit: 3_000_000, duration_hours: 5 }.
 // Like Claude Code's limits, it measures cost, not requests: `limit` is what

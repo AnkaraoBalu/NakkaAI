@@ -219,7 +219,7 @@ export default function ModelsCard({ plan, onSaved }: { plan: AdminPlan; onSaved
       )}
 
       {rows.length < MAX_MODELS && (
-        <div>
+        <div className="flex flex-wrap gap-space-sm">
           <button
             type="button"
             className={styles.secondaryButton}
@@ -242,6 +242,28 @@ export default function ModelsCard({ plan, onSaved }: { plan: AdminPlan; onSaved
             <span className="material-symbols-outlined text-[18px]">add</span>
             Add model
           </button>
+          {!rows.some((row) => row.modelId.trim() === "gpt-5.4") && (
+            <button
+              type="button"
+              className={styles.secondaryButton}
+              onClick={() => change((current) => [
+                ...current,
+                {
+                  modelId: "gpt-5.4",
+                  provider: "fuelix",
+                  upstreamModel: "gpt-5.4",
+                  inputPrice: "",
+                  outputPrice: "",
+                  cacheReadPrice: "",
+                  cacheWritePrice: "",
+                  premium: false,
+                },
+              ])}
+            >
+              <span className="material-symbols-outlined text-[18px]">add</span>
+              Add GPT-5.4 via Fuelix
+            </button>
+          )}
         </div>
       )}
 

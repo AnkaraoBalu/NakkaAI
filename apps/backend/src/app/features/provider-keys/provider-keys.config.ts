@@ -3,7 +3,7 @@ import type { Provider } from "@nakka/types/plans";
 
 export type { Provider };
 
-export const PROVIDERS: readonly Provider[] = ["anthropic", "openai", "google", "xai"];
+export const PROVIDERS: readonly Provider[] = ["anthropic", "openai", "google", "xai", "fuelix"];
 
 export interface ProviderKeysConfig {
   // Encrypts the keys saved from the admin page. Without it, keys can't be saved.
@@ -23,6 +23,7 @@ export const providerKeysConfig = registerAs(
       openai: process.env.OPENAI_API_KEY || undefined,
       google: process.env.GEMINI_API_KEY || undefined,
       xai: process.env.XAI_API_KEY || undefined,
+      fuelix: process.env.FUELIX_API_KEY || undefined,
     },
     urls: {
       anthropic:
@@ -34,6 +35,7 @@ export const providerKeysConfig = registerAs(
         process.env.GEMINI_BASE_URL ??
         "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
       xai: process.env.XAI_BASE_URL ?? "https://api.x.ai/v1/chat/completions",
+      fuelix: process.env.FUELIX_BASE_URL ?? "https://api.fuelix.ai/v1/chat/completions",
     },
   }),
 );

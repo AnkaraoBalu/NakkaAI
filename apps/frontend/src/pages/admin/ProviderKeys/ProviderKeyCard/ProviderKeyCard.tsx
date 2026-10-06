@@ -92,6 +92,8 @@ export default function ProviderKeyCard({ status, onChange, onRemoved }: Provide
         <span className={styles.status(state.tone)}>{state.label}</span>
       </div>
 
+      {info.description && <p className={styles.muted}>{info.description}</p>}
+
       {(status.updatedAt || status.lastCheckedAt) && (
         <dl className={styles.meta}>
           {status.updatedAt && (
