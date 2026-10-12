@@ -47,28 +47,53 @@ export class EmailVerificationRepository {
     return rows[0] ? toVerification(rows[0]) : null;
   }
 
-  // Starts (or restarts) verification with a fresh code.
-  async upsertCode(email: string, codeHash: string, expiresAt: Date) {
-    await this.db.query(
-      `INSERT INTO ${TABLES.EMAIL_VERIFICATIONS} (email, code_hash, expires_at)
+  // Starts (or restarts) verification with a fresh code. Returns false when a
+  // code was sent less than `cooldownMs` ago (checked atomically, so parallel
+  // requests can't all send). Failed attempts carry over to the new code until
+  // the old one has expired, so resending doesn't buy more guesses.
+  async upsertCode(
+    email: string,
+    codeHash: string,
+    expiresAt: Date,
+    cooldownMs: number,
+  ): Promise<boolean> {
+    const { rowCount } = await this.db.query(
+      `INSERT INTO ${TABLES.EMAIL_VERIFICATIONS} AS v (email, code_hash, expires_at)
        VALUES ($1, $2, $3)
        ON CONFLICT (email) DO UPDATE SET
          code_hash = EXCLUDED.code_hash,
          expires_at = EXCLUDED.expires_at,
-         attempts = 0,
+         attempts = CASE WHEN v.expires_at <= now() THEN 0 ELSE v.attempts END,
          last_sent_at = now(),
          verified_at = NULL,
          verification_token_hash = NULL,
-         token_expires_at = NULL`,
-      [email, codeHash, expiresAt],
+         token_expires_at = NULL
+       WHERE v.last_sent_at <= now() - ($4 * interval '1 millisecond')`,
+      [email, codeHash, expiresAt, cooldownMs],
     );
+    return Boolean(rowCount);
   }
 
-  async recordFailedAttempt(email: string) {
-    await this.db.query(
-      `UPDATE ${TABLES.EMAIL_VERIFICATIONS} SET attempts = attempts + 1 WHERE email = $1`,
-      [email],
+  // Uses up one attempt, atomically, so parallel guesses can't exceed the cap.
+  // Returns the code to check against, or null when no attempts are left.
+  async claimAttempt(
+    email: string,
+    maxAttempts: number,
+  ): Promise<{ codeHash: string; attempts: number; expiresAt: Date } | null> {
+    const { rows } = await this.db.query<{
+      code_hash: string;
+      attempts: number;
+      expires_at: Date;
+    }>(
+      `UPDATE ${TABLES.EMAIL_VERIFICATIONS} SET attempts = attempts + 1
+       WHERE email = $1 AND attempts < $2
+       RETURNING code_hash, attempts, expires_at`,
+      [email, maxAttempts],
     );
+    const row = rows[0];
+    return row
+      ? { codeHash: row.code_hash, attempts: row.attempts, expiresAt: row.expires_at }
+      : null;
   }
 
   async markVerified(email: string, tokenHash: string, tokenExpiresAt: Date) {

@@ -6,6 +6,7 @@ import {
   type Plan,
   type PlanModel,
   type PlanWindow,
+  type WindowUsage,
 } from "./plans.repository.js";
 
 const HOUR = 60 * 60 * 1000;
@@ -14,6 +15,19 @@ const HOUR = 60 * 60 * 1000;
 // means the window really is used up.
 export const percentUsed = (spent: number, limit: number) =>
   limit > 0 ? Math.min(100, Math.floor((spent / limit) * 100)) : 0;
+
+// What a window has spent, from its usage row. A row of the wrong kind (the
+// window was a one-time credit and now resets, or the other way round) or one
+// that resets later than the window's length allows (the window was shortened)
+// is left over from an earlier setup and counts as nothing; the next request
+// replaces it (see UsageRepository.record).
+export function spentIn(window: PlanWindow, row: WindowUsage | undefined): number {
+  if (!row) return 0;
+  if (window.duration_hours === null) return row.resetsAt === null ? row.used : 0;
+  if (row.resetsAt === null) return 0;
+  if (row.resetsAt.getTime() > Date.now() + window.duration_hours * HOUR) return 0;
+  return row.used;
+}
 
 // The windows a request on this model counts against: all of them, except
 // that premium-only windows count premium models only.
@@ -38,8 +52,9 @@ export class PlansService {
     if (!plan.windows.length) return [];
     const usage = await this.plans.usage(userId);
     return plan.windows.map((window) => {
-      const current = usage.get(window.id);
-      const spent = current?.used ?? 0;
+      const row = usage.get(window.id);
+      const spent = spentIn(window, row);
+      const current = spent > 0 ? row : undefined;
       return {
         id: window.id,
         label: window.label,

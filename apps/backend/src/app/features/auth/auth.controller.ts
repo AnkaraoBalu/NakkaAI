@@ -8,6 +8,8 @@ import {
   Post,
   UnauthorizedException,
 } from "@nestjs/common";
+import { Throttle } from "@nestjs/throttler";
+import { LIMITS } from "../../common/throttle/limits.js";
 import { AuthService } from "./auth.service.js";
 import { ClerkExchangeDto } from "./dto/clerk-exchange.dto.js";
 import { LoginDto } from "./dto/login.dto.js";
@@ -25,35 +27,41 @@ function bearerToken(authorization: string | undefined): string {
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
+  @Throttle(LIMITS.sensitive)
   @Post("signup/check")
   @HttpCode(HttpStatus.NO_CONTENT)
   async checkSignupDetails(@Body() dto: SignupDetailsDto) {
     await this.authService.checkSignupDetails(dto);
   }
 
+  @Throttle(LIMITS.sendEmail)
   @Post("signup/otp")
   @HttpCode(HttpStatus.OK)
   sendSignupOtp(@Body() dto: SignupDetailsDto) {
     return this.authService.sendSignupOtp(dto);
   }
 
+  @Throttle(LIMITS.sensitive)
   @Post("signup/otp/verify")
   @HttpCode(HttpStatus.OK)
   verifySignupOtp(@Body() dto: VerifyOtpDto) {
     return this.authService.verifySignupOtp(dto);
   }
 
+  @Throttle(LIMITS.sensitive)
   @Post("signup")
   signup(@Body() dto: SignupDto) {
     return this.authService.signup(dto);
   }
 
+  @Throttle(LIMITS.login)
   @Post("login")
   @HttpCode(HttpStatus.OK)
   login(@Body() dto: LoginDto) {
     return this.authService.login(dto);
   }
 
+  @Throttle(LIMITS.sensitive)
   @Post("oauth/clerk")
   @HttpCode(HttpStatus.OK)
   loginWithClerk(@Body() dto: ClerkExchangeDto) {

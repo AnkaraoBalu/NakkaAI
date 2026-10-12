@@ -8,7 +8,7 @@ import type { AdminConfig } from "./admin.config.js";
 import type { AdminsRepository } from "./admins.repository.js";
 import type { AuditLogRepository } from "./audit-log.repository.js";
 
-async function setup() {
+async function setup(config: Partial<AdminConfig> = {}) {
   const admin = {
     id: "a1", name: "Admin", email: "admin@nakka.in",
     passwordHash: await hashPassword("correct-horse-battery"),
@@ -31,7 +31,7 @@ async function setup() {
   const service = new AdminAuthService(
     admins as unknown as AdminsRepository,
     audit as unknown as AuditLogRepository,
-    { sessionTtlMs: 3_600_000, maxLoginAttempts: 3, loginLockMs: 60_000 } as AdminConfig,
+    { sessionTtlMs: 3_600_000, maxLoginAttempts: 3, loginLockMs: 60_000, production: false, ...config } as AdminConfig,
   );
   const guard = new AdminGuard(admins as unknown as AdminsRepository);
   return { service, guard, admins, audit };
@@ -99,9 +99,9 @@ describe("admin guard", () => {
 describe("admin signup and password", () => {
   it("opens signup only while no admin exists", async () => {
     const { service, admins } = await setup();
-    expect(await service.setupStatus()).toEqual({ setupNeeded: false });
+    expect(await service.setupStatus()).toMatchObject({ setupNeeded: false });
     admins.exists.mockResolvedValueOnce(false);
-    expect(await service.setupStatus()).toEqual({ setupNeeded: true });
+    expect(await service.setupStatus()).toMatchObject({ setupNeeded: true });
   });
 
   it("creates the first admin with a hashed password and signs them in", async () => {
@@ -140,5 +140,26 @@ describe("admin signup and password", () => {
     await service.changePassword("a1", "tok", {
       currentPassword: "correct-horse-battery", newPassword: "another-password-2" });
     expect(admins.setPassword).toHaveBeenCalledWith("a1", expect.stringMatching(/^scrypt\$/), hashToken("tok"));
+  });
+});
+
+describe("admin setup token (production)", () => {
+  const first = { name: "First", email: "first@nakka.in", password: "a-long-password-1" };
+
+  it("keeps sign-up closed in production without ADMIN_SETUP_TOKEN", async () => {
+    const { service, admins } = await setup({ production: true });
+    admins.exists.mockResolvedValue(false);
+    expect(await service.setupStatus()).toEqual({ setupNeeded: false, tokenRequired: false });
+    await expect(service.setup(first, "ip")).rejects.toThrow(/turned off/);
+    expect(admins.createFirst).not.toHaveBeenCalled();
+  });
+
+  it("needs the right token when one is set", async () => {
+    const { service, admins } = await setup({ production: true, setupToken: "s3cret-token" });
+    admins.exists.mockResolvedValue(false);
+    expect(await service.setupStatus()).toEqual({ setupNeeded: true, tokenRequired: true });
+    await expect(service.setup({ ...first, setupToken: "wrong" }, "ip")).rejects.toThrow(/isn't right/);
+    await expect(service.setup(first, "ip")).rejects.toThrow(/isn't right/);
+    await expect(service.setup({ ...first, setupToken: "s3cret-token" }, "ip")).resolves.toBeDefined();
   });
 });

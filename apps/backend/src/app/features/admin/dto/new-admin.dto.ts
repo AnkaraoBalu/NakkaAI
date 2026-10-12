@@ -1,6 +1,6 @@
-import type { NewAdminRequest } from "@nakka/types/admin";
+import type { AdminSetupRequest, NewAdminRequest } from "@nakka/types/admin";
 import { Transform } from "class-transformer";
-import { IsEmail, IsString, Length, MaxLength } from "class-validator";
+import { IsEmail, IsOptional, IsString, Length, MaxLength } from "class-validator";
 
 const trim = ({ value }: { value: unknown }) =>
   typeof value === "string" ? value.trim() : value;
@@ -21,4 +21,12 @@ export class NewAdminDto implements NewAdminRequest {
   @IsString()
   @MaxLength(128)
   password: string;
+}
+
+// The first admin, from the sign-up page.
+export class AdminSetupDto extends NewAdminDto implements AdminSetupRequest {
+  @IsOptional()
+  @IsString()
+  @MaxLength(200)
+  setupToken?: string;
 }

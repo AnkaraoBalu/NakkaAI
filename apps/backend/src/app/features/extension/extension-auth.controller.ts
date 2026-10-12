@@ -6,6 +6,8 @@ import {
   Post,
   UseGuards,
 } from "@nestjs/common";
+import { Throttle } from "@nestjs/throttler";
+import { LIMITS } from "../../common/throttle/limits.js";
 import { AuthGuard, CurrentUserId } from "../auth/auth.guard.js";
 import {
   CompleteExtensionAuthDto,
@@ -18,12 +20,14 @@ import { ExtensionAuthService } from "./extension-auth.service.js";
 export class ExtensionAuthController {
   constructor(private readonly extensionAuth: ExtensionAuthService) {}
 
+  @Throttle(LIMITS.extensionAuth)
   @Post("start")
   @HttpCode(HttpStatus.NO_CONTENT)
   start(@Body() dto: StartExtensionAuthDto) {
     return this.extensionAuth.start(dto.state, dto.redirect);
   }
 
+  @Throttle(LIMITS.extensionAuth)
   @Post("complete")
   @HttpCode(HttpStatus.OK)
   @UseGuards(AuthGuard)

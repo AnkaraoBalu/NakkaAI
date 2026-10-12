@@ -19,6 +19,7 @@ export default function Signup() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
+  const [setupToken, setSetupToken] = useState("");
   const [submitted, setSubmitted] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -36,7 +37,12 @@ export default function Signup() {
     setBusy(true);
     setError("");
     try {
-      await setup({ name: name.trim(), email: email.trim(), password });
+      await setup({
+        name: name.trim(),
+        email: email.trim(),
+        password,
+        ...(setupStatus.data?.tokenRequired ? { setupToken } : {}),
+      });
       navigate("/admin", { replace: true });
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Couldn't create the account.");
@@ -94,6 +100,16 @@ export default function Signup() {
               hint={!show("password") && <p className={styles.footnote}>At least 12 characters, with a letter and a number.</p>}
             />
             <TextField label="Confirm password" type="password" autoComplete="new-password" value={confirm} onValueChange={setConfirm} error={show("confirm")} />
+            {setupStatus.data?.tokenRequired && (
+              <TextField
+                label="Setup token"
+                type="password"
+                autoComplete="off"
+                value={setupToken}
+                onValueChange={setSetupToken}
+                hint={<p className={styles.footnote}>Enter the ADMIN_SETUP_TOKEN provided by the server owner.</p>}
+              />
+            )}
             <button type="submit" className={styles.submit} disabled={busy}>
               {busy && <span className={styles.spinner}>progress_activity</span>}
               Create admin account

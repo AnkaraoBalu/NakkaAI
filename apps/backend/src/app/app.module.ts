@@ -1,5 +1,7 @@
 import { Module } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
+import { APP_GUARD } from "@nestjs/core";
+import { ThrottlerGuard, ThrottlerModule } from "@nestjs/throttler";
 import { appConfig } from "./common/config/app.config.js";
 import { DatabaseModule } from "./common/database/database.module.js";
 import { AdminModule } from "./features/admin/admin.module.js";
@@ -15,6 +17,9 @@ import { AppService } from "./app.service.js";
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true, load: [appConfig] }),
+    // Per client address: a generous default for everything, with tighter
+    // limits on sign-in, sign-up and email routes (see @Throttle on them).
+    ThrottlerModule.forRoot([{ name: "default", ttl: 60_000, limit: 300 }]),
     DatabaseModule,
     MailModule,
     AuthModule,
@@ -25,6 +30,6 @@ import { AppService } from "./app.service.js";
     AdminModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, { provide: APP_GUARD, useClass: ThrottlerGuard }],
 })
 export class AppModule {}

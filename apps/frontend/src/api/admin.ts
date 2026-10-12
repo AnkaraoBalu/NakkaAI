@@ -9,6 +9,7 @@ import type {
   AdminUserDetail,
   AdminUserList,
   AdminSetupStatus,
+  AdminSetupRequest,
   AssignPlanRequest,
   ChangeAdminPasswordRequest,
   NewAdminRequest,
@@ -48,7 +49,7 @@ export const adminApi = {
     request<AdminAuthResponse>("/admin/auth/login", json("POST", data)),
   setupStatus: () => request<AdminSetupStatus>("/admin/auth/setup"),
   // Creates the first admin; refused once any admin exists.
-  setup: (data: NewAdminRequest) =>
+  setup: (data: AdminSetupRequest) =>
     request<AdminAuthResponse>("/admin/auth/setup", json("POST", data)),
   me: () => adminRequest<AdminProfile>("/auth/me"),
   changePassword: (data: ChangeAdminPasswordRequest) =>

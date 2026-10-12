@@ -1,4 +1,7 @@
 // Applies database/migrations/*.sql in name order, each once, each in a transaction.
+// Safe to start from several servers at once: each migration takes a
+// transaction-level lock and re-checks it wasn't applied meanwhile (session
+// locks don't survive Neon's transaction pooler).
 // Usage: yarn workspace @nakka/backend db:migrate
 import { readdir, readFile } from "node:fs/promises";
 import pg from "pg";
@@ -25,6 +28,12 @@ try {
     const sql = await readFile(new URL(file, dir), "utf8");
     await client.query("BEGIN");
     try {
+      await client.query("SELECT pg_advisory_xact_lock(4242002)");
+      const done = await client.query("SELECT 1 FROM schema_migrations WHERE name = $1", [file]);
+      if (done.rowCount) {
+        await client.query("COMMIT");
+        continue;
+      }
       await client.query(sql);
       await client.query("INSERT INTO schema_migrations (name) VALUES ($1)", [file]);
       await client.query("COMMIT");

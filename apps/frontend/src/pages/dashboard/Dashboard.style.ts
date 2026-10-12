@@ -17,7 +17,6 @@ export const styles = {
   stepText: "flex-1 font-body-sm text-body-sm text-on-surface-variant",
   stepAction:
     "self-start inline-flex items-center gap-1 font-label-md text-label-md font-semibold text-primary hover:underline underline-offset-4",
-  stats: "grid grid-cols-1 sm:grid-cols-3 gap-space-md",
   error:
     "p-3 rounded-xl bg-error-container/60 text-on-error-container font-body-md text-body-md",
   loading: "flex items-center gap-2 text-outline font-body-md text-body-md",

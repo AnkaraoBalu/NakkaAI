@@ -3,6 +3,8 @@ import { registerAs } from "@nestjs/config";
 export interface AppConfig {
   port: number;
   corsOrigins: string[];
+  // Express "trust proxy": the number of proxies in front, or false.
+  trustProxy: number | false;
 }
 
 export const appConfig = registerAs("app", (): AppConfig => ({
@@ -11,4 +13,5 @@ export const appConfig = registerAs("app", (): AppConfig => ({
     .split(",")
     .map((origin) => origin.trim())
     .filter(Boolean),
+  trustProxy: Number(process.env.TRUST_PROXY) > 0 ? Number(process.env.TRUST_PROXY) : false,
 }));

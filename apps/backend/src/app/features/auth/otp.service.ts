@@ -54,13 +54,18 @@ export class OtpService {
       }
     }
 
+    this.countEmailSent();
     const code = randomInt(0, 1_000_000).toString().padStart(6, "0");
     const expiresAt = new Date(Date.now() + this.config.otpTtlMs);
-    await this.verifications.upsertCode(
+    const stored = await this.verifications.upsertCode(
       email,
       hashCode(email, code),
       expiresAt,
+      this.config.otpResendCooldownMs,
     );
+    if (!stored) {
+      throw tooMany("Please wait a minute before requesting another code.");
+    }
     await this.mail.send(
       otpEmail(
         email,
@@ -80,11 +85,16 @@ export class OtpService {
   }
 
   async verify(email: string, code: string): Promise<VerifySignupOtpResponse> {
-    const record = await this.verifications.find(email);
+    // Each check uses up an attempt first, so parallel guesses can't get more
+    // than the allowed number.
+    const record = await this.verifications.claimAttempt(
+      email,
+      this.config.otpMaxAttempts,
+    );
     if (!record) {
-      throw new BadRequestException("Request a verification code first.");
-    }
-    if (record.attempts >= this.config.otpMaxAttempts) {
+      if (!(await this.verifications.find(email))) {
+        throw new BadRequestException("Request a verification code first.");
+      }
       throw tooMany("Too many incorrect attempts. Request a new code.");
     }
     if (record.expiresAt.getTime() <= Date.now()) {
@@ -93,8 +103,7 @@ export class OtpService {
       );
     }
     if (!sameHash(hashCode(email, code), record.codeHash)) {
-      await this.verifications.recordFailedAttempt(email);
-      const left = this.config.otpMaxAttempts - record.attempts - 1;
+      const left = this.config.otpMaxAttempts - record.attempts;
       throw left > 0
         ? new BadRequestException(
             `That code isn't right. ${left} ${left === 1 ? "attempt" : "attempts"} left.`,
@@ -128,6 +137,22 @@ export class OtpService {
         "Please verify your email before creating your account. If you already did, the code may have expired.",
       );
     }
+  }
+
+  // A cap on sign-up emails per hour across this server, so a script cycling
+  // through addresses can't use up the mail provider's daily quota.
+  private sentThisHour: number[] = [];
+
+  private countEmailSent() {
+    const hourAgo = Date.now() - 60 * 60 * 1000;
+    this.sentThisHour = this.sentThisHour.filter((at) => at > hourAgo);
+    if (this.sentThisHour.length >= this.config.otpEmailsPerHour) {
+      throw new HttpException(
+        "We're sending a lot of codes right now. Please try again in a few minutes.",
+        HttpStatus.SERVICE_UNAVAILABLE,
+      );
+    }
+    this.sentThisHour.push(Date.now());
   }
 
   complete(email: string) {

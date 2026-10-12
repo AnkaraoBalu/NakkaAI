@@ -9,16 +9,19 @@ import {
   Put,
   UseGuards,
 } from "@nestjs/common";
+import { Throttle } from "@nestjs/throttler";
+import { LIMITS } from "../../common/throttle/limits.js";
 import { AdminAuthService } from "./admin-auth.service.js";
 import { AdminGuard, CurrentAdminId, CurrentAdminToken } from "./admin.guard.js";
 import { AdminLoginDto } from "./dto/admin-login.dto.js";
 import { ChangeAdminPasswordDto } from "./dto/change-admin-password.dto.js";
-import { NewAdminDto } from "./dto/new-admin.dto.js";
+import { AdminSetupDto } from "./dto/new-admin.dto.js";
 
 @Controller("admin/auth")
 export class AdminAuthController {
   constructor(private readonly auth: AdminAuthService) {}
 
+  @Throttle(LIMITS.login)
   @Post("login")
   @HttpCode(HttpStatus.OK)
   login(@Body() dto: AdminLoginDto, @Ip() ip: string) {
@@ -32,11 +35,13 @@ export class AdminAuthController {
   }
 
   // Creates the first admin and signs them in. Refused once any admin exists.
+  @Throttle(LIMITS.setup)
   @Post("setup")
-  setup(@Body() dto: NewAdminDto, @Ip() ip: string) {
+  setup(@Body() dto: AdminSetupDto, @Ip() ip: string) {
     return this.auth.setup(dto, ip);
   }
 
+  @Throttle(LIMITS.sensitive)
   @Put("password")
   @UseGuards(AdminGuard)
   @HttpCode(HttpStatus.NO_CONTENT)

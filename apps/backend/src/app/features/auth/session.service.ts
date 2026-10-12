@@ -72,6 +72,16 @@ export class SessionService {
     return Boolean(rowCount);
   }
 
+  // Signs the user out everywhere except the session in `keepToken`
+  // (after a password change, a stolen token must stop working).
+  async revokeOthers(userId: string, keepToken: string): Promise<void> {
+    await this.db.query(
+      `UPDATE ${TABLES.AUTH_TOKENS} SET revoked_at = now()
+       WHERE user_id = $1 AND token_hash <> $2 AND revoked_at IS NULL`,
+      [userId, hashToken(keepToken)],
+    );
+  }
+
   async revoke(token: string): Promise<void> {
     await this.db.query(
       `UPDATE ${TABLES.AUTH_TOKENS} SET revoked_at = now()

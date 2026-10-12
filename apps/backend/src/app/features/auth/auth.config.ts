@@ -5,6 +5,8 @@ export interface AuthConfig {
   otpTtlMs: number;
   otpResendCooldownMs: number;
   otpMaxAttempts: number;
+  // Sign-up code emails per hour, across the server (protects the SMTP quota).
+  otpEmailsPerHour: number;
   // How long after verifying the code the user has to finish creating the account.
   verificationTokenTtlMs: number;
   // Google/GitHub sign-in through Clerk; disabled when the key is missing.
@@ -27,6 +29,7 @@ export const authConfig = registerAs("auth", (): AuthConfig => ({
   otpTtlMs: 10 * MINUTE,
   otpResendCooldownMs: 60 * 1000,
   otpMaxAttempts: 5,
+  otpEmailsPerHour: Number(process.env.OTP_EMAILS_PER_HOUR ?? 150),
   verificationTokenTtlMs: 30 * MINUTE,
   clerkSecretKey: process.env.CLERK_SECRET_KEY || undefined,
   clerkAuthorizedParties: (process.env.CORS_ORIGINS ?? "http://localhost:3000")

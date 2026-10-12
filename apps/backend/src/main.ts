@@ -1,22 +1,40 @@
 import "reflect-metadata";
-import { RequestMethod } from "@nestjs/common";
+import { Logger, RequestMethod } from "@nestjs/common";
 import { NestFactory } from "@nestjs/core";
 import { ConfigService } from "@nestjs/config";
 import type { NestExpressApplication } from "@nestjs/platform-express";
+import { json, type Request } from "express";
 import { AppModule } from "./app/app.module.js";
 import type { AppConfig } from "./app/common/config/app.config.js";
+import { checkProductionEnv } from "./app/common/config/production-env.js";
 import { createValidationPipe } from "./app/common/pipes/validation.pipe.js";
 
 async function bootstrap() {
-  // rawBody: the AI proxy forwards request bytes exactly as received.
+  const logger = new Logger("Bootstrap");
+  const { missing, warnings } = checkProductionEnv();
+  for (const warning of warnings) logger.warn(warning);
+  if (missing.length) {
+    throw new Error(`Missing production settings: ${missing.join(", ")}`);
+  }
+
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
-    rawBody: true,
+    bodyParser: false,
   });
-  // AI requests can carry files, images and PDFs.
-  app.useBodyParser("json", { limit: "25mb" });
+  // AI requests can carry files, images and PDFs, and the proxy forwards their
+  // bytes exactly as received (rawBody). Every other route takes small bodies,
+  // so a flood of large ones can't exhaust memory before auth runs.
+  const keepRaw = (req: Request & { rawBody?: Buffer }, _res: unknown, buf: Buffer) => {
+    req.rawBody = buf;
+  };
+  app.use("/v1", json({ limit: "25mb", verify: keepRaw }));
+  app.use(json({ limit: "100kb" }));
   const config = app.get(ConfigService).getOrThrow<AppConfig>("app");
 
   app.disable("x-powered-by");
+  // Behind a load balancer, the client's address comes from X-Forwarded-For.
+  // Set TRUST_PROXY to the number of proxies in front (e.g. 1); rate limits and
+  // the admin lockout key on that address.
+  if (config.trustProxy !== false) app.set("trust proxy", config.trustProxy);
   // The website uses /api/*. The VS Code extension's URLs are fixed at the root.
   app.setGlobalPrefix("api", {
     exclude: [
@@ -29,11 +47,12 @@ async function bootstrap() {
     ],
   });
   app.useGlobalPipes(createValidationPipe());
-  app.enableCors({ origin: config.corsOrigins, credentials: true });
+  // Bearer tokens, not cookies: no credentials needed cross-origin.
+  app.enableCors({ origin: config.corsOrigins });
   app.enableShutdownHooks();
 
   await app.listen(config.port);
-  console.log(`backend listening on http://localhost:${config.port}`);
+  logger.log(`backend listening on port ${config.port}`);
 }
 
 void bootstrap();

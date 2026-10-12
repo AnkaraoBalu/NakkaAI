@@ -35,3 +35,10 @@ export const CurrentUserId = createParamDecorator(
   (_data: unknown, context: ExecutionContext): string =>
     context.switchToHttp().getRequest<AuthedRequest>().userId!,
 );
+
+// The caller's session token, set by AuthGuard (e.g. to keep this session
+// when signing out everywhere else).
+export const CurrentSessionToken = createParamDecorator(
+  (_data: unknown, context: ExecutionContext): string =>
+    context.switchToHttp().getRequest<AuthedRequest>().sessionToken!,
+);

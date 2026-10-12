@@ -8,6 +8,7 @@ import type {
   Provider,
 } from "@nakka/types/plans";
 import { DATABASE, TABLES } from "../../common/database/constants.js";
+import { inTransaction } from "../../common/database/transaction.js";
 
 export type { Plan, PlanModel, PlanPricing, PlanWindow };
 
@@ -49,6 +50,12 @@ export const toPlanModel = (row: PlanModelRow): PlanModel => ({
   cacheWritePrice: row.cache_write_price === null ? null : Number(row.cache_write_price),
   premium: row.premium,
 });
+
+// A usage_windows row: spend so far and when it resets (null: never, a credit).
+export interface WindowUsage {
+  used: number;
+  resetsAt: Date | null;
+}
 
 export interface ActivePlan extends Plan {
   // When a time-limited plan ends; null for Free or no end date.
@@ -118,9 +125,7 @@ export class PlansRepository {
 
   // Replaces the plan's model list; the order given becomes the display order.
   async setModels(planId: string, models: PlanModel[]): Promise<void> {
-    const client = await this.db.connect();
-    try {
-      await client.query("BEGIN");
+    return inTransaction(this.db, async (client) => {
       await client.query(`DELETE FROM ${TABLES.PLAN_MODELS} WHERE plan_id = $1`, [planId]);
       for (const [index, model] of models.entries()) {
         await client.query(
@@ -142,13 +147,7 @@ export class PlansRepository {
           ],
         );
       }
-      await client.query("COMMIT");
-    } catch (error) {
-      await client.query("ROLLBACK");
-      throw error;
-    } finally {
-      client.release();
-    }
+    });
   }
 
   // How many users are on each plan right now (everyone else is on Free).
@@ -161,16 +160,18 @@ export class PlansRepository {
   }
 
   // Current spend per window, in micro-dollars; rows whose reset time has
-  // passed count as empty.
+  // passed count as empty. A one-time credit's row has resetsAt null.
   async usage(
     userId: string,
-  ): Promise<Map<string, { used: number; resetsAt: Date }>> {
+  ): Promise<Map<string, WindowUsage>> {
     const { rows } = await this.db.query<{
       window_id: string;
       used: string;
-      resets_at: Date;
+      resets_at: Date | null;
     }>(
-      `SELECT window_id, used, resets_at FROM ${TABLES.USAGE_WINDOWS}
+      `SELECT window_id, used,
+              CASE WHEN resets_at = 'infinity' THEN NULL ELSE resets_at END AS resets_at
+       FROM ${TABLES.USAGE_WINDOWS}
        WHERE user_id = $1 AND resets_at > now()`,
       [userId],
     );

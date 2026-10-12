@@ -1,9 +1,7 @@
 import { Link } from "react-router-dom";
 import { useAuth } from "../../api-hooks/auth";
 import { useUsage } from "../../api-hooks/usage";
-import StatTile from "../../components/StatTile";
 import { VSCODE_INSTALL_URL } from "../../constants/extension";
-import { formatNumber } from "../../utils/format";
 import PlanCard from "./PlanCard";
 import { styles } from "./Dashboard.style";
 
@@ -50,28 +48,7 @@ export default function Dashboard() {
           Loading your plan…
         </p>
       )}
-      {data && (
-        <>
-          <PlanCard usage={data} />
-          <div className={styles.stats}>
-            <StatTile
-              icon="bolt"
-              label="Requests, last 30 days"
-              value={formatNumber(data.totals.requests)}
-            />
-            <StatTile
-              icon="input"
-              label="Tokens sent"
-              value={formatNumber(data.totals.inputTokens, { short: true })}
-            />
-            <StatTile
-              icon="output"
-              label="Tokens received"
-              value={formatNumber(data.totals.outputTokens, { short: true })}
-            />
-          </div>
-        </>
-      )}
+      {data && <PlanCard usage={data} />}
 
       <section className={styles.section}>
         <h3 className={styles.sectionTitle}>Get started</h3>

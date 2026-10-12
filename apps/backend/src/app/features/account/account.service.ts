@@ -13,6 +13,7 @@ import {
 } from "../auth/identities.repository.js";
 import { hashPassword, verifyPassword } from "../auth/password-hash.js";
 import { checkPasswordPolicy } from "../auth/password-policy.js";
+import { SessionService } from "../auth/session.service.js";
 import { UsersRepository } from "../auth/users.repository.js";
 import type { SetPasswordDto } from "./dto/set-password.dto.js";
 
@@ -26,6 +27,7 @@ export class AccountService {
     private readonly users: UsersRepository,
     private readonly identities: IdentitiesRepository,
     private readonly clerk: ClerkService,
+    private readonly sessions: SessionService,
   ) {}
 
   async security(userId: string): Promise<AccountSecurity> {
@@ -92,8 +94,10 @@ export class AccountService {
     return this.security(userId);
   }
 
+  // Other sessions (other browsers, the extension) are signed out; this one stays.
   async setPassword(
     userId: string,
+    sessionToken: string,
     dto: SetPasswordDto,
   ): Promise<AccountSecurity> {
     const user = await this.users.findById(userId);
@@ -108,6 +112,7 @@ export class AccountService {
     const policyError = checkPasswordPolicy(dto.password);
     if (policyError) throw new BadRequestException(policyError);
     await this.users.setPassword(userId, await hashPassword(dto.password));
+    await this.sessions.revokeOthers(userId, sessionToken);
     return this.security(userId);
   }
 }

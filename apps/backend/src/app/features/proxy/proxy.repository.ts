@@ -8,6 +8,7 @@ import {
   toPlanModel,
   type PlanModelRow,
   type PlanWindow,
+  type WindowUsage,
 } from "../plans/plans.repository.js";
 
 export interface ProxyAccess {
@@ -18,7 +19,7 @@ export interface ProxyAccess {
   model: PlanModel | null;
   // What each live window has spent so far, in micro-dollars (windows whose
   // reset time has passed are left out).
-  usage: { windowId: string; used: number; resetsAt: Date }[];
+  usage: ({ windowId: string } & WindowUsage)[];
 }
 
 // Everything an AI request needs to know, in one database round trip:
@@ -40,7 +41,7 @@ export class ProxyRepository {
       plan_name: string | null;
       windows: PlanWindow[] | null;
       model: PlanModelRow | null;
-      usage: { window_id: string; used: number; resets_at: string }[];
+      usage: { window_id: string; used: number | string; resets_at: string | null }[];
     }>(
       `WITH token AS (
          SELECT id, user_id, last_used_at < now() - interval '5 minutes' AS touch
@@ -56,7 +57,12 @@ export class ProxyRepository {
               plan.id AS plan_id, plan.name AS plan_name, plan.windows,
               (SELECT row_to_json(m) FROM ${TABLES.PLAN_MODELS} m
                WHERE m.plan_id = plan.id AND m.model_id = $2) AS model,
-              (SELECT COALESCE(json_agg(w), '[]'::json) FROM ${TABLES.USAGE_WINDOWS} w
+              (SELECT COALESCE(json_agg(json_build_object(
+                  'window_id', w.window_id,
+                  'used', w.used,
+                  'resets_at', CASE WHEN w.resets_at = 'infinity' THEN NULL ELSE w.resets_at END
+                )), '[]'::json)
+               FROM ${TABLES.USAGE_WINDOWS} w
                WHERE w.user_id = token.user_id AND w.resets_at > now()) AS usage
        FROM token LEFT JOIN plan ON true`,
       [tokenHash, modelId],
@@ -76,7 +82,7 @@ export class ProxyRepository {
       usage: row.usage.map((w) => ({
         windowId: w.window_id,
         used: Number(w.used),
-        resetsAt: new Date(w.resets_at),
+        resetsAt: w.resets_at === null ? null : new Date(w.resets_at),
       })),
     };
   }

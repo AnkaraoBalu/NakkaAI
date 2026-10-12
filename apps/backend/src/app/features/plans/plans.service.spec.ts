@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { PlansService, percentUsed, windowsFor } from "./plans.service.js";
+import { PlansService, percentUsed, spentIn, windowsFor } from "./plans.service.js";
 import type { PlansRepository } from "./plans.repository.js";
 
 const HOUR = 60 * 60 * 1000;
@@ -13,14 +13,14 @@ const plan = {
   ],
 };
 
-function setup(usage: Map<string, { used: number; resetsAt: Date }>) {
+function setup(usage: Map<string, { used: number; resetsAt: Date | null }>) {
   const repository = { usage: vi.fn(async () => usage) };
   return { service: new PlansService(repository as unknown as PlansRepository), repository };
 }
 
 describe("allowance windows", () => {
   it("shows users the percent used, never the dollars", async () => {
-    const resetsAt = new Date("2030-01-01T05:00:00Z");
+    const resetsAt = new Date(Date.now() + 2 * HOUR);
     const { service } = setup(new Map([["5h", { used: 1_020_000, resetsAt }]]));
     const [fiveHour] = await service.windowsFor("u1", plan);
     expect(fiveHour).toEqual({
@@ -66,7 +66,7 @@ describe("Free credit and premium cap", () => {
   };
 
   it("shows a one-time credit without a reset time", async () => {
-    const { service } = setup(new Map([["credit", { used: 125_000, resetsAt: new Date(8.64e15) }]]));
+    const { service } = setup(new Map([["credit", { used: 125_000, resetsAt: null }]]));
     const [credit] = await service.windowsFor("u1", free);
     expect(credit).toEqual({ id: "credit", label: "Free credit", used: 50, limit: 100 });
     expect(credit).not.toHaveProperty("resetsAt");
@@ -79,5 +79,23 @@ describe("Free credit and premium cap", () => {
     ];
     expect(windowsFor(windows, { premium: true }).map((w) => w.id)).toEqual(["5h", "week-premium"]);
     expect(windowsFor(windows, { premium: false }).map((w) => w.id)).toEqual(["5h"]);
+  });
+});
+
+describe("left-over usage rows", () => {
+  const session = { id: "5h", label: "Session", limit: 100, duration_hours: 5 };
+  const credit = { id: "credit", label: "Credit", limit: 100, duration_hours: null };
+  const soon = new Date(Date.now() + HOUR);
+
+  it("counts a row of the right kind", () => {
+    expect(spentIn(session, { used: 40, resetsAt: soon })).toBe(40);
+    expect(spentIn(credit, { used: 40, resetsAt: null })).toBe(40);
+  });
+
+  it("ignores rows from an earlier setup of the window instead of blocking forever", () => {
+    expect(spentIn(session, { used: 999, resetsAt: null })).toBe(0); // was a one-time credit
+    expect(spentIn(credit, { used: 999, resetsAt: soon })).toBe(0); // was a resetting window
+    expect(spentIn(session, { used: 999, resetsAt: new Date(Date.now() + 100 * HOUR) })).toBe(0); // was longer
+    expect(spentIn(session, undefined)).toBe(0);
   });
 });

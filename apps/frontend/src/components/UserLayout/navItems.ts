@@ -12,7 +12,7 @@ export const navItems: NavItem[] = [
     label: "Usage",
     to: "/dashboard/usage",
     icon: "monitoring",
-    description: "Your allowance, models and request history.",
+    description: "How much of your allowance is used.",
   },
   {
     label: "Settings",

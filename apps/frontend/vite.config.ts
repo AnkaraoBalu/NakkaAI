@@ -1,4 +1,4 @@
-import { defineConfig } from "vite";
+import { defineConfig, loadEnv, type UserConfig } from "vite";
 import react from "@vitejs/plugin-react";
 
 // In development, the VS Code extension can use http://localhost:3000 as its
@@ -10,7 +10,17 @@ const extensionApi = {
   "/auth/revoke": backend,
 };
 
-export default defineConfig({
+export default defineConfig(({ mode }) => {
+  // A production build must know where the API is; without it the site would
+  // quietly call http://localhost:8080 from users' browsers.
+  const env = loadEnv(mode, process.cwd(), "VITE_");
+  if (mode === "production" && !env.VITE_API_URL) {
+    throw new Error("Set VITE_API_URL (the backend address) for production builds.");
+  }
+  return config;
+});
+
+const config = {
   plugins: [react()],
   server: {
     host: "localhost",
@@ -29,4 +39,4 @@ export default defineConfig({
   build: {
     rollupOptions: { input: { main: "index.html", code: "code.html" } },
   },
-});
+} satisfies UserConfig;

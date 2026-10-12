@@ -16,6 +16,12 @@ const obj = (value: unknown): Json =>
   value && typeof value === "object" ? (value as Json) : {};
 
 export class UsageMeter {
+  // True once the provider's final usage numbers have arrived. When the answer
+  // is cut short (the user pressed Stop), they never do: the output is then
+  // estimated from the text streamed so far, so it isn't free.
+  complete = false;
+  // Characters of generated text (answer, thinking, tool arguments) seen.
+  private streamedChars = 0;
   readonly counts: TokenCounts = {
     inputTokens: 0,
     outputTokens: 0,
@@ -54,12 +60,21 @@ export class UsageMeter {
       if (rest.startsWith("data:")) this.readEvent(rest.slice(5).trim());
     } else {
       try {
-        this.readUsage(
-          obj(JSON.parse(this.chunks.join("") + this.decoder.decode()).usage),
-        );
+        const usage = JSON.parse(this.chunks.join("") + this.decoder.decode()).usage;
+        if (usage) {
+          this.readUsage(obj(usage));
+          this.complete = true;
+        }
       } catch {
-        // Not JSON: nothing to count.
+        // Not JSON, or cut short: nothing reported.
       }
+    }
+    if (!this.complete) {
+      // About 4 characters per token.
+      this.counts.outputTokens = Math.max(
+        this.counts.outputTokens,
+        Math.ceil(this.streamedChars / 4),
+      );
     }
     return this.counts;
   }
@@ -76,10 +91,27 @@ export class UsageMeter {
       // Input counts arrive in message_start; output totals in message_delta.
       if (event.type === "message_start")
         this.readUsage(obj(obj(event.message).usage));
-      if (event.type === "message_delta") this.readUsage(obj(event.usage));
-    } else if (event.usage) {
-      // OpenAI and compatible: the final chunk carries usage.
-      this.readUsage(obj(event.usage));
+      if (event.type === "content_block_delta") {
+        const delta = obj(event.delta);
+        this.countText(delta.text, delta.thinking, delta.partial_json);
+      }
+      if (event.type === "message_delta" && event.usage) {
+        this.readUsage(obj(event.usage));
+        this.complete = true;
+      }
+    } else {
+      for (const choice of Array.isArray(event.choices) ? event.choices : []) {
+        const delta = obj(obj(choice).delta);
+        this.countText(delta.content, delta.reasoning_content, delta.reasoning);
+        for (const call of Array.isArray(delta.tool_calls) ? delta.tool_calls : []) {
+          this.countText(obj(obj(call).function).arguments);
+        }
+      }
+      if (event.usage) {
+        // OpenAI and compatible: the final chunk carries usage.
+        this.readUsage(obj(event.usage));
+        this.complete = true;
+      }
     }
   }
 
@@ -97,14 +129,26 @@ export class UsageMeter {
       }
     } else {
       if ("prompt_tokens" in usage) this.promptTokens = num(usage.prompt_tokens);
-      if ("completion_tokens" in usage)
-        this.counts.outputTokens = num(usage.completion_tokens);
+      // Some providers leave reasoning tokens out of completion_tokens but
+      // count them in total_tokens: bill whichever is larger.
+      if ("completion_tokens" in usage || "total_tokens" in usage)
+        this.counts.outputTokens = Math.max(
+          num(usage.completion_tokens),
+          num(usage.total_tokens) - num(usage.prompt_tokens),
+          0,
+        );
       const cached = obj(usage.prompt_tokens_details).cached_tokens;
       if (cached !== undefined) this.counts.cacheReadTokens = num(cached);
       this.counts.inputTokens = Math.max(
         this.promptTokens - this.counts.cacheReadTokens,
         0,
       );
+    }
+  }
+
+  private countText(...parts: unknown[]) {
+    for (const part of parts) {
+      if (typeof part === "string") this.streamedChars += part.length;
     }
   }
 }

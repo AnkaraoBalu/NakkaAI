@@ -1,32 +1,35 @@
 import type { MyUsage } from "@nakka/types/usage";
 import { tokenStore } from "../../api/session";
-import { usageApi, type UsageDays } from "../../api/usage";
+import { usageApi } from "../../api/usage";
 import { useApiData } from "../useApiData";
 
 // The top bar, Overview and Usage pages all ask for this at once; share one
 // request and reuse the answer briefly so the numbers on screen agree.
-// Keyed by session too, so another account in the same tab never sees it.
+// Keyed by session, so another account in the same tab never sees it.
 const FRESH_MS = 15_000;
-const cache = new Map<string, { at: number; promise: Promise<MyUsage> }>();
-const keyFor = (days: UsageDays) => `${tokenStore.get()}|${days}`;
+let cached: { key: string; at: number; promise: Promise<MyUsage> } | null = null;
 
-function fetchUsage(days: UsageDays): Promise<MyUsage> {
-  const key = keyFor(days);
-  const hit = cache.get(key);
-  if (hit && Date.now() - hit.at < FRESH_MS) return hit.promise;
-  const promise = usageApi.mine(days);
-  cache.set(key, { at: Date.now(), promise });
-  promise.catch(() => cache.delete(key));
+function fetchUsage(): Promise<MyUsage> {
+  const key = String(tokenStore.get());
+  if (cached && cached.key === key && Date.now() - cached.at < FRESH_MS) {
+    return cached.promise;
+  }
+  const promise = usageApi.mine();
+  const entry = { key, at: Date.now(), promise };
+  cached = entry;
+  promise.catch(() => {
+    if (cached === entry) cached = null;
+  });
   return promise;
 }
 
-// The signed-in user's plan, allowance windows and the last `days` of usage.
-export function useUsage(days: UsageDays = 30) {
-  const state = useApiData(() => fetchUsage(days), [days]);
+// The signed-in user's plan and allowance windows.
+export function useUsage() {
+  const state = useApiData(fetchUsage, []);
   return {
     ...state,
     refresh: async () => {
-      cache.delete(keyFor(days));
+      cached = null;
       await state.reload();
     },
   };

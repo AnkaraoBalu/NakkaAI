@@ -18,6 +18,13 @@ export interface AdminLoginRequest {
 // GET /api/admin/auth/setup: true only while no admin exists yet.
 export interface AdminSetupStatus {
   setupNeeded: boolean;
+  // Production asks for the server's ADMIN_SETUP_TOKEN, so only the owner
+  // can create the first admin.
+  tokenRequired: boolean;
+}
+
+export interface AdminSetupRequest extends NewAdminRequest {
+  setupToken?: string;
 }
 
 // Creating an admin: the first one (signup page) or by another admin.

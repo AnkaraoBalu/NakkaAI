@@ -69,4 +69,32 @@ describe("UsageMeter", () => {
       cacheWriteTokens: 0,
     });
   });
+
+  it("estimates the output of a stream cut short (Stop pressed) from its text", () => {
+    const meter = new UsageMeter("anthropic", true);
+    meter.push(bytes(
+      'data: {"type":"message_start","message":{"usage":{"input_tokens":50,"output_tokens":1}}}\n\n' +
+      `data: {"type":"content_block_delta","delta":{"type":"text_delta","text":"${"x".repeat(400)}"}}\n\n`,
+    ));
+    const counts = meter.finish();
+    expect(meter.complete).toBe(false);
+    expect(counts).toMatchObject({ inputTokens: 50, outputTokens: 100 });
+  });
+
+  it("estimates a cut-short OpenAI-style stream, counting reasoning and tool arguments", () => {
+    const meter = new UsageMeter("openai", true);
+    meter.push(bytes(
+      `data: {"choices":[{"delta":{"content":"${"a".repeat(40)}","reasoning_content":"${"b".repeat(40)}"}}]}\n\n` +
+      `data: {"choices":[{"delta":{"tool_calls":[{"function":{"arguments":"${"c".repeat(40)}"}}]}}]}\n\n`,
+    ));
+    expect(meter.finish().outputTokens).toBe(30);
+    expect(meter.complete).toBe(false);
+  });
+
+  it("bills reasoning tokens reported only in total_tokens", () => {
+    const meter = new UsageMeter("openai", true);
+    meter.push(bytes('data: {"choices":[],"usage":{"prompt_tokens":10,"completion_tokens":5,"total_tokens":95}}\n\n'));
+    expect(meter.finish()).toMatchObject({ inputTokens: 10, outputTokens: 85 });
+    expect(meter.complete).toBe(true);
+  });
 });

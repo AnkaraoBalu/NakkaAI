@@ -2,6 +2,7 @@ import { Inject, Injectable } from "@nestjs/common";
 import type pg from "pg";
 import type { AdminAccount, AdminProfile } from "@nakka/types/admin";
 import { DATABASE, TABLES } from "../../common/database/constants.js";
+import { inTransaction } from "../../common/database/transaction.js";
 
 export interface AdminWithPassword extends AdminProfile {
   passwordHash: string;
@@ -64,9 +65,7 @@ export class AdminsRepository {
 
   // Creates the first admin, or returns null if one already exists.
   async createFirst(admin: NewAdmin): Promise<AdminProfile | null> {
-    const client = await this.db.connect();
-    try {
-      await client.query("BEGIN");
+    return inTransaction(this.db, async (client) => {
       await client.query("SELECT pg_advisory_xact_lock($1)", [FIRST_ADMIN_LOCK]);
       const { rows } = await client.query<AdminProfile>(
         `INSERT INTO ${TABLES.ADMIN_USERS} (name, email, password_hash)
@@ -75,14 +74,8 @@ export class AdminsRepository {
          RETURNING id, name, email`,
         [admin.name, admin.email, admin.passwordHash],
       );
-      await client.query("COMMIT");
       return rows[0] ?? null;
-    } catch (error) {
-      await client.query("ROLLBACK");
-      throw error;
-    } finally {
-      client.release();
-    }
+    });
   }
 
   // Returns null if an admin already has this email (any case).
@@ -119,9 +112,7 @@ export class AdminsRepository {
 
   // New password; every other session of this admin is signed out.
   async setPassword(id: string, passwordHash: string, keepTokenHash: string) {
-    const client = await this.db.connect();
-    try {
-      await client.query("BEGIN");
+    return inTransaction(this.db, async (client) => {
       await client.query(
         `UPDATE ${TABLES.ADMIN_USERS} SET password_hash = $2 WHERE id = $1`,
         [id, passwordHash],
@@ -131,13 +122,7 @@ export class AdminsRepository {
          WHERE admin_id = $1 AND token_hash <> $2 AND revoked_at IS NULL`,
         [id, keepTokenHash],
       );
-      await client.query("COMMIT");
-    } catch (error) {
-      await client.query("ROLLBACK");
-      throw error;
-    } finally {
-      client.release();
-    }
+    });
   }
 
   async findById(id: string): Promise<AdminProfile | null> {
