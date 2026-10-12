@@ -15,6 +15,12 @@ export const navItems: NavItem[] = [
     description: "How much of your allowance is used.",
   },
   {
+    label: "Billing",
+    to: "/dashboard/billing",
+    icon: "credit_card",
+    description: "Your plan, renewals and payment history.",
+  },
+  {
     label: "Settings",
     to: "/dashboard/settings",
     icon: "settings",

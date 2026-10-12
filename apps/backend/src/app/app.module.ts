@@ -10,6 +10,7 @@ import { AccountModule } from "./features/account/account.module.js";
 import { ExtensionModule } from "./features/extension/extension.module.js";
 import { ProxyModule } from "./features/proxy/proxy.module.js";
 import { UsageModule } from "./features/usage/usage.module.js";
+import { BillingModule } from "./features/billing/billing.module.js";
 import { MailModule } from "./mail/mail.module.js";
 import { AppController } from "./app.controller.js";
 import { AppService } from "./app.service.js";
@@ -27,6 +28,7 @@ import { AppService } from "./app.service.js";
     ExtensionModule,
     ProxyModule,
     UsageModule,
+    BillingModule,
     AdminModule,
   ],
   controllers: [AppController],

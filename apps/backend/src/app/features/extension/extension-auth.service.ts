@@ -1,4 +1,4 @@
-import { BadRequestException, Inject, Injectable } from "@nestjs/common";
+import { BadRequestException, Inject, Injectable, Logger } from "@nestjs/common";
 import type { ExtensionAuthCompleteResponse } from "@nakka/types/extension";
 import { authConfig, type AuthConfig } from "../auth/auth.config.js";
 import { SessionService } from "../auth/session.service.js";
@@ -11,6 +11,8 @@ const EXPIRED =
 // The browser half of "Sign in" in the VS Code extension.
 @Injectable()
 export class ExtensionAuthService {
+  private readonly logger = new Logger(ExtensionAuthService.name);
+
   constructor(
     private readonly states: AuthStatesRepository,
     private readonly sessions: SessionService,
@@ -62,6 +64,9 @@ export class ExtensionAuthService {
     const url = new URL(redirect);
     url.searchParams.set("state", state);
     url.searchParams.set("token", token);
+    this.logger.log(
+      `Extension callback prepared for ${url.protocol}//${url.host}${url.pathname}; token omitted`,
+    );
     return { redirectUrl: url.toString() };
   }
 }

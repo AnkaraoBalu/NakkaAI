@@ -10,6 +10,7 @@ export const TABLES = {
   PLANS: "plans",
   PLAN_MODELS: "plan_models",
   SUBSCRIPTIONS: "subscriptions",
+  BILLING_PAYMENTS: "billing_payments",
   USAGE_EVENTS: "usage_events",
   USAGE_WINDOWS: "usage_windows",
   ADMIN_USERS: "admin_users",

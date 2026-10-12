@@ -7,6 +7,7 @@
     "./users": "./users.ts",
     "./extension": "./extension.ts",
     "./plans": "./plans.ts",
+    "./billing": "./billing.ts",
     "./usage": "./usage.ts",
     "./admin": "./admin.ts"
   },

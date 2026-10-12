@@ -28,6 +28,7 @@ const AdminLayout = lazy(() => import("./components/AdminLayout"));
 const Dashboard = lazy(() => import("./pages/dashboard"));
 const Usage = lazy(() => import("./pages/dashboard/Usage"));
 const Settings = lazy(() => import("./pages/dashboard/Settings"));
+const Billing = lazy(() => import("./pages/dashboard/Billing"));
 const AdminLogin = lazy(() => import("./pages/admin/Login"));
 const AdminSignup = lazy(() => import("./pages/admin/Signup"));
 const AdminAdmins = lazy(() => import("./pages/admin/Admins"));
@@ -68,6 +69,7 @@ export default function AppRouter() {
               <Route path="dashboard" element={<UserLayout />}>
                 <Route index element={<Dashboard />} />
                 <Route path="usage" element={<Usage />} />
+                <Route path="billing" element={<Billing />} />
                 <Route path="settings" element={<Settings />} />
                 <Route
                   path="*"

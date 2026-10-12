@@ -1,8 +1,4 @@
-import { LEGAL_CONTACT_EMAIL } from "./legal";
-
-// Paid plans are assigned by hand for now, so "Upgrade" opens an email.
-export const UPGRADE_URL = `mailto:${LEGAL_CONTACT_EMAIL}?subject=${encodeURIComponent(
-  "Upgrade my Nakka plan",
-)}`;
+// Billing and plan changes are managed from the signed-in billing page.
+export const UPGRADE_URL = "/dashboard/billing";
 
 export const FREE_PLAN_ID = "free";

@@ -27,6 +27,7 @@ async function bootstrap() {
     req.rawBody = buf;
   };
   app.use("/v1", json({ limit: "25mb", verify: keepRaw }));
+  app.use("/api/billing/webhook", json({ limit: "100kb", verify: keepRaw }));
   app.use(json({ limit: "100kb" }));
   const config = app.get(ConfigService).getOrThrow<AppConfig>("app");
 
