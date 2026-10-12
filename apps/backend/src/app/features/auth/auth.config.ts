@@ -24,6 +24,15 @@ export interface AuthConfig {
 
 const MINUTE = 60 * 1000;
 
+/** FRONTEND_URL is one redirect target; CORS_ORIGINS holds the full allowlist. */
+export function frontendUrlFromEnv(value = process.env.FRONTEND_URL): string {
+  const firstConfigured = value
+    ?.split(",")
+    .map((origin) => origin.trim())
+    .find(Boolean);
+  return (firstConfigured ?? "http://localhost:3000").replace(/\/+$/, "");
+}
+
 export const authConfig = registerAs("auth", (): AuthConfig => ({
   sessionTtlMs: Number(process.env.SESSION_TTL_HOURS ?? 168) * 60 * MINUTE,
   otpTtlMs: 10 * MINUTE,
@@ -40,8 +49,5 @@ export const authConfig = registerAs("auth", (): AuthConfig => ({
     Number(process.env.EXTENSION_TOKEN_TTL_DAYS ?? 90) * 24 * 60 * MINUTE,
   authStateTtlMs: 10 * MINUTE,
   extensionRedirectPrefix: "vscode://Nakka.nakka/",
-  frontendUrl: (process.env.FRONTEND_URL ?? "http://localhost:3000").replace(
-    /\/+$/,
-    "",
-  ),
+  frontendUrl: frontendUrlFromEnv(),
 }));

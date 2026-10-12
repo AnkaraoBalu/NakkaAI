@@ -31,5 +31,8 @@ export function checkProductionEnv(env: NodeJS.ProcessEnv = process.env) {
   for (const name of ["CORS_ORIGINS", "FRONTEND_URL"]) {
     if (/localhost|127\.0\.0\.1/.test(value(name))) warnings.push(`${name} points at localhost`);
   }
+  if (value("FRONTEND_URL").includes(",")) {
+    warnings.push("FRONTEND_URL should be one URL; put multiple website origins in CORS_ORIGINS");
+  }
   return { missing, warnings };
 }
