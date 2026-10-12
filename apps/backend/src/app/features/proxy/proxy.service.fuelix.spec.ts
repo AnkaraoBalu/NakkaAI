@@ -1,5 +1,10 @@
 import { EventEmitter } from "node:events";
 import { afterEach, describe, expect, it, vi } from "vitest";
+const { mockFetch } = vi.hoisted(() => ({ mockFetch: vi.fn() }));
+vi.mock("undici", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("undici")>()),
+  fetch: mockFetch,
+}));
 import { ProxyService } from "./proxy.service.js";
 import type { ProxyRepository } from "./proxy.repository.js";
 import type { UsageRepository } from "./usage.repository.js";
@@ -17,7 +22,8 @@ function setup() {
   const usage = { record: vi.fn(async () => {}) };
   const keys = { get: vi.fn(async () => "fuelix-test-key"), url: vi.fn(() => "https://api.fuelix.ai/v1/chat/completions") };
   const service = new ProxyService(access as unknown as ProxyRepository,
-    usage as unknown as UsageRepository, keys as unknown as ProviderKeysService, {});
+    usage as unknown as UsageRepository, keys as unknown as ProviderKeysService,
+    { maxConcurrentPerUser: 4, extraAnthropicBetas: [] });
   const payload = { model: "gpt-5.4", messages: [{ role: "user", content: "echo" }],
     tools: [{ type: "function", function: { name: "echo", parameters: { type: "object" } } }] };
   const rawBody = Buffer.from(JSON.stringify(payload));
@@ -33,21 +39,23 @@ function setup() {
   return { service, keys, usage, req, res, rawBody, windows };
 }
 
-afterEach(() => vi.unstubAllGlobals());
+afterEach(() => {
+  vi.unstubAllGlobals();
+  mockFetch.mockReset();
+});
 
 describe("Fuelix proxy", () => {
   it("forwards tools unchanged with the Fuelix key and records provider usage", async () => {
     const reply = JSON.stringify({ choices: [{ message: { role: "assistant", tool_calls: [{
       id: "call-1", type: "function", function: { name: "echo", arguments: "{}" },
     }] } }], usage: { prompt_tokens: 2, completion_tokens: 3 } });
-    const fetch = vi.fn(async () => new globalThis.Response(reply, {
+    mockFetch.mockResolvedValue(new globalThis.Response(reply, {
       status: 200, headers: { "content-type": "application/json" },
     }));
-    vi.stubGlobal("fetch", fetch);
     const { service, keys, usage, req, res, rawBody, windows } = setup();
     await service.handle(req, res as unknown as Response, "chat");
     expect(keys.get).toHaveBeenCalledWith("fuelix");
-    expect(fetch).toHaveBeenCalledWith("https://api.fuelix.ai/v1/chat/completions", expect.objectContaining({
+    expect(mockFetch).toHaveBeenCalledWith("https://api.fuelix.ai/v1/chat/completions", expect.objectContaining({
       headers: { "content-type": "application/json", authorization: "Bearer fuelix-test-key" }, body: rawBody,
     }));
     expect(Buffer.concat(res.write.mock.calls.map(([chunk]) => Buffer.from(chunk))).toString()).toBe(reply);
@@ -58,8 +66,7 @@ describe("Fuelix proxy", () => {
   });
 
   it("rejects the Anthropic Messages route for the Fuelix OpenAI protocol", async () => {
-    const fetch = vi.fn();
-    vi.stubGlobal("fetch", fetch);
+    const fetch = mockFetch;
     const { service, req, res, usage } = setup();
     await service.handle(req, res as unknown as Response, "messages");
     expect(res.status).toHaveBeenCalledWith(400);
