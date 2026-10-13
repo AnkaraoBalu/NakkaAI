@@ -1,5 +1,5 @@
 import type { BillingCycle, BillingSummary } from "@nakka/types/billing";
-import { request } from "./http";
+import { download, request } from "./http";
 import { tokenStore } from "./session";
 
 export interface CheckoutOrder {
@@ -21,4 +21,6 @@ export const billingApi = {
     request<{ success: true; accessUntil: string }>("/billing/verify", {
       method: "POST", token: tokenStore.get() ?? undefined, body: JSON.stringify(data),
     }),
+  downloadInvoice: (paymentId: string) =>
+    download(`/billing/payments/${encodeURIComponent(paymentId)}/invoice`, "nakka-invoice.pdf", tokenStore.get() ?? undefined),
 };

@@ -46,3 +46,34 @@ export async function request<T>(
   }
   return body as T;
 }
+
+// Downloads a file from the backend (e.g. a PDF) and saves it in the browser.
+// The server's Content-Disposition names the file; `fallbackName` is used otherwise.
+export async function download(path: string, fallbackName: string, token?: string): Promise<void> {
+  let response: Response;
+  try {
+    response = await fetch(`${API_URL}${path}`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
+  } catch {
+    throw new ApiError("Can't reach the server. Check your connection and try again.", 0);
+  }
+  if (!response.ok) {
+    const body = (await response.json().catch(() => null)) as ApiErrorBody | null;
+    const message = body?.message;
+    throw new ApiError(
+      (Array.isArray(message) ? message[0] : message) ?? "Could not download the file. Please try again.",
+      response.status,
+    );
+  }
+  const name =
+    /filename="?([^";]+)"?/.exec(response.headers.get("Content-Disposition") ?? "")?.[1] ?? fallbackName;
+  const url = URL.createObjectURL(await response.blob());
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = name;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}

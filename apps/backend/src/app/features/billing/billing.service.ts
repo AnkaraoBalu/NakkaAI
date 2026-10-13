@@ -1,11 +1,12 @@
 import {
-  Injectable, ServiceUnavailableException, UnauthorizedException,
+  Injectable, NotFoundException, ServiceUnavailableException, UnauthorizedException,
 } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { PlansRepository } from "../plans/plans.repository.js";
 import { UsersRepository } from "../auth/users.repository.js";
 import { BillingRepository, type BillingCycle } from "./billing.repository.js";
+import { invoiceNumber, renderInvoice } from "./invoice-pdf.js";
 
 const RAZORPAY_API = "https://api.razorpay.com/v1";
 const hmac = (secret: string, value: string) => createHmac("sha256", secret).update(value).digest("hex");
@@ -133,6 +134,18 @@ export class BillingService {
       userId,
     );
     return { success: true, accessUntil: result.accessUntil };
+  }
+
+  // A PDF invoice for one of the user's paid payments.
+  async invoice(userId: string, paymentId: string): Promise<{ fileName: string; pdf: Buffer }> {
+    const [payment, user] = await Promise.all([
+      this.billing.paidForUser(userId, paymentId), this.users.findById(userId),
+    ]);
+    if (!payment || !user) throw new NotFoundException("Invoice not found.");
+    const pdf = await renderInvoice(payment, {
+      name: `${user.firstName} ${user.lastName}`.trim(), email: user.email,
+    });
+    return { fileName: `${invoiceNumber(payment)}.pdf`, pdf };
   }
 
   private gatewayReady() {

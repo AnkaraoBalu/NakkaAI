@@ -49,7 +49,8 @@ async function bootstrap() {
   });
   app.useGlobalPipes(createValidationPipe());
   // Bearer tokens, not cookies: no credentials needed cross-origin.
-  app.enableCors({ origin: config.corsOrigins });
+  // Content-Disposition carries a download's file name (e.g. invoices).
+  app.enableCors({ origin: config.corsOrigins, exposedHeaders: ["Content-Disposition"] });
   app.enableShutdownHooks();
 
   await app.listen(config.port);

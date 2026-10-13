@@ -1,4 +1,6 @@
-import { Body, Controller, Get, Headers, Post, Req, UseGuards } from "@nestjs/common";
+import {
+  Body, Controller, Get, Headers, Param, ParseUUIDPipe, Post, Req, StreamableFile, UseGuards,
+} from "@nestjs/common";
 import type { Request } from "express";
 import { AuthGuard, CurrentUserId } from "../auth/auth.guard.js";
 import { BillingService } from "./billing.service.js";
@@ -15,6 +17,17 @@ export class BillingController {
   @UseGuards(AuthGuard)
   summary(@CurrentUserId() userId: string) {
     return this.billing.summary(userId);
+  }
+
+  @Get("payments/:id/invoice")
+  @UseGuards(AuthGuard)
+  async invoice(@CurrentUserId() userId: string, @Param("id", new ParseUUIDPipe()) paymentId: string) {
+    const { fileName, pdf } = await this.billing.invoice(userId, paymentId);
+    return new StreamableFile(pdf, {
+      type: "application/pdf",
+      disposition: `attachment; filename="${fileName}"`,
+      length: pdf.length,
+    });
   }
 
   @Post("checkout")

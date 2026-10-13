@@ -41,8 +41,19 @@ const dateTime = (date: string) => new Intl.DateTimeFormat("en-IN", {
   dateStyle: "medium", timeStyle: "short",
 }).format(new Date(date));
 
-function PaymentRow({ payment }: { payment: BillingPayment }) {
+function PaymentRow({ payment, onError }: { payment: BillingPayment; onError: (message: string) => void }) {
   const state = payment.status;
+  const [downloading, setDownloading] = useState(false);
+  const downloadInvoice = async () => {
+    setDownloading(true);
+    try {
+      await billingApi.downloadInvoice(payment.id);
+    } catch (reason) {
+      onError(reason instanceof Error ? reason.message : "Could not download the invoice.");
+    } finally {
+      setDownloading(false);
+    }
+  };
   return (
     <tr className="border-t border-outline-variant/40 text-on-surface">
       <td className="px-4 py-4">
@@ -53,6 +64,14 @@ function PaymentRow({ payment }: { payment: BillingPayment }) {
       <td className="px-4 py-4 capitalize">{payment.method ?? "—"}</td>
       <td className="px-4 py-4 whitespace-nowrap">{dateTime(payment.paidAt ?? payment.createdAt)}</td>
       <td className="px-4 py-4"><span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${state === "paid" ? "bg-emerald-100 text-emerald-800" : state === "failed" ? "bg-red-100 text-red-800" : "bg-amber-100 text-amber-800"}`}>{state}</span></td>
+      <td className="px-4 py-4">
+        {state === "paid" ? (
+          <button type="button" disabled={downloading} onClick={() => void downloadInvoice()} className="inline-flex items-center gap-1 rounded-lg px-2 py-1 font-medium text-primary hover:bg-primary-container/40 disabled:opacity-50" aria-label={`Download invoice for ${payment.paymentId ?? "this payment"}`}>
+            <span className={`material-symbols-outlined text-[18px] ${downloading ? "animate-spin" : ""}`}>{downloading ? "progress_activity" : "download"}</span>
+            {downloading ? "Preparing…" : "Invoice"}
+          </button>
+        ) : <span className="text-on-surface-variant">—</span>}
+      </td>
       <td className="px-4 py-4 whitespace-nowrap">{payment.accessUntil ? formatDate(payment.accessUntil) : "—"}</td>
     </tr>
   );
@@ -162,7 +181,7 @@ export default function Billing() {
       <section className="overflow-hidden rounded-2xl border border-outline-variant/50 bg-surface">
         <div className="flex items-start justify-between gap-4 p-5 sm:p-7"><div><h2 className="text-xl font-semibold text-on-surface">Payment history</h2><p className="mt-1 text-sm text-on-surface-variant">Payments, payment method and the Pro access period for each purchase.</p></div><button type="button" onClick={() => void refresh().catch((reason: unknown) => setError(reason instanceof Error ? reason.message : "Could not refresh billing details."))} className="inline-flex shrink-0 items-center gap-1 rounded-lg px-3 py-2 text-sm font-medium text-primary hover:bg-primary-container/40"><span className="material-symbols-outlined text-[18px]">refresh</span><span className="hidden sm:inline">Refresh</span></button></div>
         {!data?.payments.length ? <p className="border-t border-outline-variant/40 px-5 py-8 text-sm text-on-surface-variant sm:px-7">No payments yet.</p> : (
-          <div className="overflow-x-auto"><table className="w-full min-w-[780px] text-left text-sm"><thead className="bg-surface-container-low text-xs uppercase tracking-wide text-outline"><tr><th className="px-4 py-3 font-semibold">Plan / reference</th><th className="px-4 py-3 font-semibold">Amount</th><th className="px-4 py-3 font-semibold">Method</th><th className="px-4 py-3 font-semibold">Date</th><th className="px-4 py-3 font-semibold">Status</th><th className="px-4 py-3 font-semibold">Access until</th></tr></thead><tbody>{data.payments.map((payment) => <PaymentRow key={payment.id} payment={payment} />)}</tbody></table></div>
+          <div className="overflow-x-auto"><table className="w-full min-w-[880px] text-left text-sm"><thead className="bg-surface-container-low text-xs uppercase tracking-wide text-outline"><tr><th className="px-4 py-3 font-semibold">Plan / reference</th><th className="px-4 py-3 font-semibold">Amount</th><th className="px-4 py-3 font-semibold">Method</th><th className="px-4 py-3 font-semibold">Date</th><th className="px-4 py-3 font-semibold">Status</th><th className="px-4 py-3 font-semibold">Invoice</th><th className="px-4 py-3 font-semibold">Access until</th></tr></thead><tbody>{data.payments.map((payment) => <PaymentRow key={payment.id} payment={payment} onError={setError} />)}</tbody></table></div>
         )}
       </section>
       <p className="text-xs text-on-surface-variant">Questions about a charge? Contact <a className="underline" href={`mailto:${LEGAL_CONTACT_EMAIL}`}>{LEGAL_CONTACT_EMAIL}</a>.</p>

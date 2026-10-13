@@ -121,7 +121,17 @@ export class BillingRepository {
     });
   }
 
+  // One of the user's own paid payments, for its invoice. Null for anyone else's or an unpaid one.
+  async paidForUser(userId: string, id: string): Promise<BillingPayment | null> {
+    const rows = await this.select(`WHERE user_id = $1 AND id = $2 AND status = 'paid'`, [userId, id]);
+    return rows[0] ?? null;
+  }
+
   async history(userId: string): Promise<BillingPayment[]> {
+    return this.select(`WHERE user_id = $1 ORDER BY created_at DESC LIMIT 50`, [userId]);
+  }
+
+  private async select(where: string, params: unknown[]): Promise<BillingPayment[]> {
     const { rows } = await this.db.query<{
       id: string; billing_cycle: BillingCycle; amount_paise: string; currency: string;
       razorpay_order_id: string | null; razorpay_payment_id: string | null; payment_method: string | null;
@@ -129,8 +139,8 @@ export class BillingRepository {
     }>(
       `SELECT id, billing_cycle, amount_paise, currency, razorpay_order_id, razorpay_payment_id,
               payment_method, status, created_at, paid_at, access_until
-       FROM ${TABLES.BILLING_PAYMENTS} WHERE user_id = $1 ORDER BY created_at DESC LIMIT 50`,
-      [userId],
+       FROM ${TABLES.BILLING_PAYMENTS} ${where}`,
+      params,
     );
     return rows.map((row) => ({
       id: row.id, cycle: row.billing_cycle, amountPaise: Number(row.amount_paise), currency: row.currency,
