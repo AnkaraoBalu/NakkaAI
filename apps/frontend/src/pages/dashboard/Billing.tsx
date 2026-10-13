@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import type { BillingCycle, BillingSummary, BillingPayment } from "@nakka/types/billing";
 import { billingApi, type CheckoutOrder } from "../../api/billing";
 import { useAuth } from "../../api-hooks/auth";
+import { usageChanged } from "../../api-hooks/usage";
 import { LEGAL_CONTACT_EMAIL } from "../../constants/legal";
 import { formatDate } from "../../utils/format";
 
@@ -91,6 +92,7 @@ export default function Billing() {
         handler: async (result) => {
           try {
             await billingApi.verify(result);
+            usageChanged();
             await refresh();
             setNotice("Payment confirmed. Your Pro plan is active.");
           } catch (reason) {

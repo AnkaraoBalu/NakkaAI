@@ -3,6 +3,7 @@ import type {
   AdminAuthResponse,
   AdminLoginRequest,
   AdminOverview,
+  AdminPaymentList,
   AdminPlan,
   AdminProfile,
   AdminUsageReport,
@@ -93,5 +94,10 @@ export const adminApi = {
     adminRequest<AdminUserDetail>(
       `/users/${encodeURIComponent(userId)}/plan`,
       json("PUT", data),
+    ),
+
+  payments: (search: string, status: string, page: number, pageSize: number) =>
+    adminRequest<AdminPaymentList>(
+      `/payments?${new URLSearchParams({ search, status, page: String(page), pageSize: String(pageSize) })}`,
     ),
 };

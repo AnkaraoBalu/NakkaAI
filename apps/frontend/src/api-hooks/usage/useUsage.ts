@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import type { MyUsage } from "@nakka/types/usage";
 import { tokenStore } from "../../api/session";
 import { usageApi } from "../../api/usage";
@@ -23,9 +24,24 @@ function fetchUsage(): Promise<MyUsage> {
   return promise;
 }
 
+const USAGE_CHANGED_EVENT = "nakka:usage-changed";
+
+// Call after something changes the user's plan (e.g. a payment) so every
+// screen showing it, like the top bar's plan badge, loads it again.
+export function usageChanged() {
+  cached = null;
+  window.dispatchEvent(new Event(USAGE_CHANGED_EVENT));
+}
+
 // The signed-in user's plan and allowance windows.
 export function useUsage() {
   const state = useApiData(fetchUsage, []);
+  const { reload } = state;
+  useEffect(() => {
+    const onChange = () => void reload();
+    window.addEventListener(USAGE_CHANGED_EVENT, onChange);
+    return () => window.removeEventListener(USAGE_CHANGED_EVENT, onChange);
+  }, [reload]);
   return {
     ...state,
     refresh: async () => {

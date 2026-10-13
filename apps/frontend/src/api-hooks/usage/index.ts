@@ -1,1 +1,1 @@
-export { useUsage } from "./useUsage";
+export { useUsage, usageChanged } from "./useUsage";

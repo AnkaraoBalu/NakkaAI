@@ -38,6 +38,7 @@ const AdminPlans = lazy(() => import("./pages/admin/Plans"));
 const AdminUsers = lazy(() => import("./pages/admin/Users"));
 const AdminUserDetail = lazy(() => import("./pages/admin/UserDetail"));
 const AdminUsage = lazy(() => import("./pages/admin/Usage"));
+const AdminPayments = lazy(() => import("./pages/admin/Payments"));
 
 export default function AppRouter() {
   return (
@@ -96,6 +97,7 @@ export default function AppRouter() {
                   <Route path="plans" element={<AdminPlans />} />
                   <Route path="users" element={<AdminUsers />} />
                   <Route path="users/:userId" element={<AdminUserDetail />} />
+                  <Route path="payments" element={<AdminPayments />} />
                   <Route path="usage" element={<AdminUsage />} />
                   <Route path="admins" element={<AdminAdmins />} />
                   <Route path="*" element={<Navigate to="/admin" replace />} />

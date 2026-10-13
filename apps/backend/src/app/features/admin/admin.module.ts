@@ -11,6 +11,8 @@ import { AdminAuthController } from "./admin-auth.controller.js";
 import { AdminAuthService } from "./admin-auth.service.js";
 import { AdminKeysController } from "./admin-keys.controller.js";
 import { AdminKeysService } from "./admin-keys.service.js";
+import { AdminPaymentsController } from "./admin-payments.controller.js";
+import { AdminPaymentsRepository } from "./admin-payments.repository.js";
 import { AdminPlansController } from "./admin-plans.controller.js";
 import { AdminPlansService } from "./admin-plans.service.js";
 import { AdminUsageController } from "./admin-usage.controller.js";
@@ -34,6 +36,7 @@ import { AuditLogRepository } from "./audit-log.repository.js";
     AdminAdminsController,
     AdminKeysController,
     AdminPlansController,
+    AdminPaymentsController,
     AdminUsersController,
     AdminUsageController,
   ],
@@ -45,6 +48,7 @@ import { AuditLogRepository } from "./audit-log.repository.js";
     AuditLogRepository,
     AdminKeysService,
     AdminPlansService,
+    AdminPaymentsRepository,
     AdminUsersRepository,
     AdminUsersService,
     AdminUsageService,

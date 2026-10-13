@@ -1,4 +1,5 @@
 // The admin dashboard (/api/admin/*). Admins are separate accounts from users.
+import type { BillingPayment } from "./billing.js";
 import type { UsageWindow } from "./extension.js";
 import type { Plan, PlanModel, PlanPricing, PlanWindow, Provider } from "./plans.js";
 import type { UsageTotals } from "./usage.js";
@@ -168,4 +169,29 @@ export interface AdminOverview {
   providers: ProviderKeyStatus[];
   topUsers: TopUser[];
   recentActivity: AuditEntry[];
+}
+
+// A payment with who made it, as the admin Payments page lists them.
+export interface AdminPaymentRow extends BillingPayment {
+  userId: string;
+  email: string;
+  name: string;
+}
+
+// Paid revenue across all payments, whatever the list is filtered to.
+export interface AdminPaymentTotals {
+  revenuePaise: number;
+  revenueLast30DaysPaise: number;
+  paid: number;
+  failed: number;
+  pending: number;
+  payingUsers: number;
+}
+
+export interface AdminPaymentList {
+  items: AdminPaymentRow[];
+  total: number;
+  page: number;
+  pageSize: number;
+  totals: AdminPaymentTotals;
 }

@@ -27,6 +27,12 @@ export const navItems: NavItem[] = [
     description: "Everyone who signed up, and their plans.",
   },
   {
+    label: "Payments",
+    to: "/admin/payments",
+    icon: "payments",
+    description: "Every Razorpay payment and who made it.",
+  },
+  {
     label: "Usage",
     to: "/admin/usage",
     icon: "monitoring",
