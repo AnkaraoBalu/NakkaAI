@@ -1,5 +1,5 @@
 import {
-  Body, Controller, Get, Headers, Param, ParseUUIDPipe, Post, Req, StreamableFile, UseGuards,
+  Body, Controller, Get, Header, Headers, Param, ParseUUIDPipe, Post, Req, StreamableFile, UseGuards,
 } from "@nestjs/common";
 import type { Request } from "express";
 import { AuthGuard, CurrentUserId } from "../auth/auth.guard.js";
@@ -12,6 +12,13 @@ type RawRequest = Request & { rawBody?: Buffer };
 @Controller("billing")
 export class BillingController {
   constructor(private readonly billing: BillingService) {}
+
+  // The Pro price, for the public pricing page (no sign-in).
+  @Get("pricing")
+  @Header("Cache-Control", "public, max-age=60")
+  pricing() {
+    return this.billing.publicPricing();
+  }
 
   @Get()
   @UseGuards(AuthGuard)

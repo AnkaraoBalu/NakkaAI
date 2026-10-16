@@ -7,6 +7,7 @@ import { PlansRepository } from "../plans/plans.repository.js";
 import { UsersRepository } from "../auth/users.repository.js";
 import { BillingRepository, type BillingCycle } from "./billing.repository.js";
 import { invoiceNumber, renderInvoice } from "./invoice-pdf.js";
+import { proPrices, type ProPrices } from "./pricing.js";
 
 const RAZORPAY_API = "https://api.razorpay.com/v1";
 const hmac = (secret: string, value: string) => createHmac("sha256", secret).update(value).digest("hex");
@@ -36,19 +37,25 @@ export class BillingService {
     const [plan, allPlans, payments] = await Promise.all([
       this.plans.planFor(userId), this.plans.list(), this.billing.history(userId),
     ]);
-    const pro = allPlans.find((candidate) => candidate.id === "pro");
-    const monthlyRupees = Number(pro?.pricing?.monthlyPriceInr ?? 0);
-    const pricingReady = Number.isFinite(monthlyRupees) && monthlyRupees >= 1;
+    const prices = proPrices(allPlans.find((candidate) => candidate.id === "pro")?.pricing?.monthlyPriceInr);
     return {
       plan: { id: plan.id, name: plan.name, endsAt: plan.endsAt?.toISOString() ?? null },
-      prices: pricingReady ? {
-        monthlyPaise: Math.round(monthlyRupees * 100),
-        yearlyPaise: Math.round(monthlyRupees * 12 * 0.8 * 100),
-        currency: "INR" as const,
-      } : null,
-      checkoutEnabled: pricingReady && this.gatewayReady(),
+      prices,
+      checkoutEnabled: prices !== null && this.gatewayReady(),
       payments,
     };
+  }
+
+  // Pro's price for the public pricing page. Kept for a few seconds, since every
+  // visitor to the website asks for it.
+  private publicPrices?: { at: number; prices: ProPrices | null };
+
+  async publicPricing() {
+    if (!this.publicPrices || Date.now() - this.publicPrices.at > 30_000) {
+      const pro = (await this.plans.list()).find((candidate) => candidate.id === "pro");
+      this.publicPrices = { at: Date.now(), prices: proPrices(pro?.pricing?.monthlyPriceInr) };
+    }
+    return { prices: this.publicPrices.prices };
   }
 
   async createCheckout(userId: string, cycle: BillingCycle) {
@@ -57,11 +64,9 @@ export class BillingService {
       throw new ServiceUnavailableException("Payment confirmation is not configured yet.");
     }
     const pro = (await this.plans.list()).find((candidate) => candidate.id === "pro");
-    const monthlyRupees = Number(pro?.pricing?.monthlyPriceInr ?? 0);
-    if (!Number.isFinite(monthlyRupees) || monthlyRupees < 1) {
-      throw new ServiceUnavailableException("Pro pricing has not been configured yet.");
-    }
-    const amountPaise = Math.round(monthlyRupees * (cycle === "yearly" ? 12 * 0.8 : 1) * 100);
+    const prices = proPrices(pro?.pricing?.monthlyPriceInr);
+    if (!prices) throw new ServiceUnavailableException("Pro pricing has not been configured yet.");
+    const amountPaise = cycle === "yearly" ? prices.yearlyPaise : prices.monthlyPaise;
     const localId = await this.billing.createPending(userId, amountPaise, cycle);
     try {
       const response = await fetch(`${RAZORPAY_API}/orders`, {

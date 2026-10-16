@@ -68,3 +68,12 @@ export function formatUsd(micros: number) {
     maximumFractionDigits: digits,
   })}`;
 }
+
+// Paise → "₹999", "₹9,590" (whole rupees, Indian digit grouping).
+export function formatInr(paise: number) {
+  return new Intl.NumberFormat("en-IN", {
+    style: "currency",
+    currency: "INR",
+    maximumFractionDigits: 0,
+  }).format(paise / 100);
+}

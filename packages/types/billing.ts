@@ -20,3 +20,9 @@ export interface BillingSummary {
   checkoutEnabled: boolean;
   payments: BillingPayment[];
 }
+
+// GET /api/billing/pricing: Pro's price for the public pricing page (no sign-in).
+// `prices` is null until the admin has set Pro's monthly price.
+export interface PublicPricing {
+  prices: BillingSummary["prices"];
+}

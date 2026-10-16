@@ -1,4 +1,4 @@
-import type { BillingCycle, BillingSummary } from "@nakka/types/billing";
+import type { BillingCycle, BillingSummary, PublicPricing } from "@nakka/types/billing";
 import { download, request } from "./http";
 import { tokenStore } from "./session";
 
@@ -13,6 +13,8 @@ export interface CheckoutOrder {
 }
 
 export const billingApi = {
+  // Pro's price, shown on the public pricing page.
+  pricing: () => request<PublicPricing>("/billing/pricing"),
   summary: () => request<BillingSummary>("/billing", { token: tokenStore.get() ?? undefined }),
   checkout: (cycle: BillingCycle) => request<CheckoutOrder>("/billing/checkout", {
     method: "POST", token: tokenStore.get() ?? undefined, body: JSON.stringify({ cycle }),

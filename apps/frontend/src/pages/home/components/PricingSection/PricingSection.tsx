@@ -1,5 +1,8 @@
 import { useState } from "react";
+import { billingApi } from "../../../../api/billing";
+import { useApiData } from "../../../../api-hooks/useApiData";
 import { useAuthModal } from "../../../../context/authModalContext";
+import { formatInr } from "../../../../utils/format";
 import { styles } from "./PricingSection.style";
 
 type Billing = "monthly" | "yearly";
@@ -19,14 +22,26 @@ const proFeatures = [
   "Faster queue at busy times",
   "Email support",
 ];
-const proPrice: Record<Billing, { price: string; period: string }> = {
-  monthly: { price: "$20", period: "/ month" },
-  yearly: { price: "$16", period: "/ month (billed yearly)" },
-};
 
 export default function PricingSection() {
   const [billing, setBilling] = useState<Billing>("monthly");
   const { openAuth } = useAuthModal();
+  // The price comes from the same place billing charges it from, so the two
+  // can't disagree.
+  const { data, loading } = useApiData(() => billingApi.pricing(), []);
+  const prices = data?.prices ?? null;
+  const proPrice = !prices
+    ? { price: loading ? "…" : "—", period: loading ? "" : "Price coming soon" }
+    : billing === "monthly"
+      ? { price: formatInr(prices.monthlyPaise), period: "/ month" }
+      : {
+          price: formatInr(Math.round(prices.yearlyPaise / 12)),
+          period: `/ month (${formatInr(prices.yearlyPaise)} billed yearly)`,
+        };
+  // What yearly saves against paying monthly for 12 months.
+  const savePercent = prices
+    ? Math.round((1 - prices.yearlyPaise / (prices.monthlyPaise * 12)) * 100)
+    : 20;
 
   return (
     <section className={styles.root} id="pricing">
@@ -52,7 +67,7 @@ export default function PricingSection() {
           onClick={() => setBilling("yearly")}
         >
           <span>Yearly</span>
-          <span className={styles.saveBadge}>Save 20%</span>
+          <span className={styles.saveBadge}>Save {savePercent}%</span>
         </button>
       </div>
 
@@ -62,7 +77,7 @@ export default function PricingSection() {
             <span className={styles.planName}>Free</span>
             <p className={styles.planTagline}>Enough to see what it can do.</p>
             <div className={styles.priceRow}>
-              <span className={styles.price}>$0</span>
+              <span className={styles.price}>₹0</span>
               <span className={styles.period}>forever</span>
             </div>
             <ul className={styles.features}>
@@ -94,8 +109,8 @@ export default function PricingSection() {
               For the days the work does not stop.
             </p>
             <div className={styles.priceRow}>
-              <span className={styles.price}>{proPrice[billing].price}</span>
-              <span className={styles.period}>{proPrice[billing].period}</span>
+              <span className={styles.price}>{proPrice.price}</span>
+              <span className={styles.period}>{proPrice.period}</span>
             </div>
             <ul className={styles.features}>
               {proFeatures.map((feature) => (
